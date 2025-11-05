@@ -1,7 +1,6 @@
-"""Integration entry point for homebridge_momnitor."""
+"""Integration entry point for homebridge_monitor."""
 from __future__ import annotations
 
-from typing import Any
 import logging
 
 from homeassistant.config_entries import ConfigEntry
@@ -17,7 +16,7 @@ PLATFORMS = ["binary_sensor"]
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    """Set up homebridge_momnitor from a config entry."""
+    """Set up homebridge_monitor from a config entry."""
     host = entry.data.get(CONF_HOST)
     if not host:
         _LOGGER.error("No host configured for %s entry %s", DOMAIN, entry.entry_id)
