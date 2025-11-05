@@ -8,7 +8,6 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers import aiohttp_client
 
 from .const import DOMAIN, CONF_HOST, CONF_SWAGGER_PATH, CONF_VERIFY_SSL, CONF_TOKEN
-from .coordinator import HomebridgeCoordinator
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -17,6 +16,9 @@ PLATFORMS = ["binary_sensor"]
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up homebridge_monitor from a config entry."""
+    # Import coordinator lazily to avoid potential import-time issues for type checkers.
+    from .coordinator import HomebridgeCoordinator
+
     host = entry.data.get(CONF_HOST)
     if not host:
         _LOGGER.error("No host configured for %s entry %s", DOMAIN, entry.entry_id)
@@ -56,6 +58,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     hass.data[DOMAIN][entry.entry_id] = coordinator
 
     # forward platforms
-    hass.config_entries.async_setup_platforms(entry, PLATFORMS)
+    # Mypy stub for hass.config_entries may not include async_setup_platforms;
+    # suppress the attribute-defined error here.
+    hass.config_entries.async_setup_platforms(entry, PLATFORMS)  # type: ignore[attr-defined]
 
     return True
