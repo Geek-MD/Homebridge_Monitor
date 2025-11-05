@@ -1,6 +1,5 @@
 [tool.ruff]
 # Pin the ruff version the GitHub Action should use.
-# The astral-sh/ruff-action reads this value and will install the requested version.
 version = "0.14.3"
 
 # Project settings
@@ -20,14 +19,14 @@ exclude = [
 ]
 
 # Make Ruff compatible with Black where relevant
-extend-ignore = ["E203", "W503"]
+# NOTE: W503 removed for compatibility with this ruff version/action runner.
+extend-ignore = ["E203"]
 
 # Enable import-order checks (ruff's 'I' rules)
 extend-select = ["I"]
 
 [tool.ruff.per-file-ignores]
 # Allow __init__.py files to have unused imports for export-style re-exports.
-# (Adjust if you prefer to fix these instead of ignoring.)
 "custom_components/*/__init__.py" = ["F401"]
 
 [project]
