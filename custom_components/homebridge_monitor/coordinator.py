@@ -1,4 +1,4 @@
-"""Coordinator to fetch Homebridge update info, refresh token and trigger reauth if needed."""
+"""Coordinator to fetch Homebridge update info and manage token refresh/reauth."""
 from __future__ import annotations
 
 from typing import Any, Dict, List, Optional
@@ -13,6 +13,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from homeassistant.components import persistent_notification
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.helpers import aiohttp_client
 
 from .const import (
     SCAN_INTERVAL,
@@ -46,7 +47,7 @@ class HomebridgeCoordinator(DataUpdateCoordinator[dict]):
         token: str | None = None,
     ) -> None:
         """Initialize coordinator."""
-        super().__init__(hass, _LOGGER, name="homebridge_update", update_interval=SCAN_INTERVAL)
+        super().__init__(hass, _LOGGER, name="homebridge_momnitor", update_interval=SCAN_INTERVAL)
         self.hass = hass
         self.entry = entry
         self.base_url = base_url.rstrip("/")
@@ -64,6 +65,8 @@ class HomebridgeCoordinator(DataUpdateCoordinator[dict]):
         if self.token:
             headers["Authorization"] = f"Bearer {self.token}"
 
+        results: dict[str, Any] = {"plugins": []}
+
         # Check token expiry in entry data and refresh if necessary
         try:
             token_expires = self.entry.data.get(CONF_TOKEN_EXPIRES)
@@ -77,7 +80,7 @@ class HomebridgeCoordinator(DataUpdateCoordinator[dict]):
                     await self._trigger_reauth(
                         message=(
                             "El token de Homebridge ha expirado. Por favor, reautentícate en la integración "
-                            "Homebridge Update para restaurar el acceso."
+                            "Homebridge Monitor para restaurar el acceso."
                         ),
                     )
                     raise UpdateFailed("Authentication token expired")
@@ -95,12 +98,127 @@ class HomebridgeCoordinator(DataUpdateCoordinator[dict]):
         except Exception:
             _LOGGER.exception("Error checking token expiry")
 
-        # ... existing logic to call endpoints (omitted here for brevity in this snippet) ...
-        # The rest of the method should be your previous implementation that calls
-        # ENDPOINT_HOMEBRIDGE_VERSION, ENDPOINT_NODE_VERSION and ENDPOINT_PLUGINS,
-        # normalizes data and returns the results dict.
-        # For brevity, keep the same implementation you already have.
-        raise UpdateFailed("Coordinator fetch omitted in snippet; use previous implementation")
+        try:
+            async with async_timeout.timeout(20):
+                # Optionally try to GET swagger to ensure API up (best-effort)
+                try:
+                    swagger_url = f"{self.base_url}{self.swagger_path}"
+                    resp = await self.session.get(swagger_url, ssl=self.verify_ssl)
+                    if resp.status == 200:
+                        _LOGGER.debug("Swagger descriptor reachable at %s", swagger_url)
+                    else:
+                        _LOGGER.debug("Swagger returned status %s (url: %s)", resp.status, swagger_url)
+                except aiohttp.ClientError as err:
+                    _LOGGER.debug("Could not fetch swagger descriptor: %s", err)
+
+                # 1) Homebridge core version
+                try:
+                    url = f"{self.base_url}{ENDPOINT_HOMEBRIDGE_VERSION}"
+                    resp = await self.session.get(url, headers=headers, ssl=self.verify_ssl)
+                    if resp.status == 200:
+                        data = await resp.json()
+                        current = data.get("currentVersion") or data.get("current_version") or data.get("version")
+                        latest = data.get("latestVersion") or data.get("latest_version")
+                        update_available = data.get("updateAvailable") or data.get("update_available") or (
+                            latest and current and latest != current
+                        )
+                        results["homebridge"] = {
+                            "current_version": current,
+                            "latest_version": latest,
+                            "update_available": bool(update_available),
+                        }
+                    else:
+                        _LOGGER.debug("Homebridge version endpoint returned %s", resp.status)
+                except aiohttp.ClientError as err:
+                    _LOGGER.debug("Error requesting homebridge version: %s", err)
+
+                # 2) Node.js
+                try:
+                    url = f"{self.base_url}{ENDPOINT_NODE_VERSION}"
+                    resp = await self.session.get(url, headers=headers, ssl=self.verify_ssl)
+                    if resp.status == 200:
+                        data = await resp.json()
+                        current = data.get("currentVersion") or data.get("current_version") or data.get("version")
+                        latest = data.get("latestVersion") or data.get("latest_version")
+                        update_available = data.get("updateAvailable") or data.get("update_available") or (
+                            latest and current and latest != current
+                        )
+                        results["node"] = {
+                            "current_version": current,
+                            "latest_version": latest,
+                            "update_available": bool(update_available),
+                        }
+                    else:
+                        _LOGGER.debug("Node version endpoint returned %s", resp.status)
+                except aiohttp.ClientError as err:
+                    _LOGGER.debug("Error requesting node version: %s", err)
+
+                # 3) Plugins list
+                try:
+                    url = f"{self.base_url}{ENDPOINT_PLUGINS}"
+                    resp = await self.session.get(url, headers=headers, ssl=self.verify_ssl)
+                    if resp.status == 200:
+                        data = await resp.json()
+                        # Expected: list of plugin objects. Normalize fields defensively.
+                        for p in data:
+                            name = p.get("name") or p.get("displayName") or p.get("title") or p.get("pluginName")
+                            package = p.get("package") or p.get("plugin") or p.get("packageName") or p.get("npm")
+                            current = p.get("version") or p.get("installedVersion") or p.get("currentVersion")
+                            latest = p.get("latestVersion") or p.get("availableVersion")
+                            update_available = p.get("updateAvailable", False) or (latest and current and latest != current)
+                            plugin_obj = {
+                                "name": name or package or "unknown",
+                                "package": package,
+                                "current_version": current,
+                                "latest_version": latest,
+                                "update_available": bool(update_available),
+                            }
+                            results["plugins"].append(plugin_obj)
+                    else:
+                        _LOGGER.debug("Plugins endpoint returned %s", resp.status)
+                except aiohttp.ClientError as err:
+                    _LOGGER.debug("Error requesting plugins: %s", err)
+
+                # Identify Homebridge UI among plugins, remove it from plugins list and add as 'ui' entry
+                ui_info = {"current_version": None, "latest_version": None, "update_available": False}
+                remaining_plugins: List[dict] = []
+                for p in results["plugins"]:
+                    pkg = (p.get("package") or "").lower() if p.get("package") else ""
+                    nm = (p.get("name") or "").lower()
+                    is_ui = False
+                    for pkg_name in HOMEBRIDGE_UI_PACKAGE_NAMES:
+                        if pkg_name in pkg:
+                            is_ui = True
+                            break
+                    if not is_ui:
+                        for display_key in HOMEBRIDGE_UI_DISPLAY_KEYS:
+                            if display_key in nm:
+                                is_ui = True
+                                break
+                    if is_ui:
+                        ui_info["current_version"] = p.get("current_version")
+                        ui_info["latest_version"] = p.get("latest_version")
+                        ui_info["update_available"] = bool(p.get("update_available", False))
+                    else:
+                        remaining_plugins.append(p)
+                results["plugins"] = remaining_plugins
+                results["ui"] = ui_info
+
+                # Ensure keys exist for homebridge and node (in case endpoints failed)
+                results.setdefault("homebridge", {"current_version": None, "latest_version": None, "update_available": False})
+                results.setdefault("node", {"current_version": None, "latest_version": None, "update_available": False})
+                results.setdefault("ui", {"current_version": None, "latest_version": None, "update_available": False})
+                results.setdefault("plugins", [])
+
+                # Update plugin_keys set for dynamic entity lifecycle management
+                self.plugin_keys = {self._plugin_key(p) for p in results["plugins"]}
+
+                return results
+
+        except asyncio.TimeoutError as err:
+            raise UpdateFailed(f"Timeout fetching Homebridge data: {err}") from err
+        except aiohttp.ClientError as err:
+            raise UpdateFailed(f"Error fetching Homebridge data: {err}") from err
 
     async def _async_refresh_token(self) -> None:
         """Attempt to refresh the authentication token using /api/auth/refresh.
