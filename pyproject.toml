@@ -5,7 +5,8 @@ version = "0.14.3"
 
 # Project settings
 line-length = 88
-target-version = ["py311"]
+# Use string form for compatibility with the TOML parser used by the action
+target-version = "py311"
 
 # Files/dirs to exclude from linting
 exclude = [
@@ -29,7 +30,6 @@ extend-select = ["I"]
 # (Adjust if you prefer to fix these instead of ignoring.)
 "custom_components/*/__init__.py" = ["F401"]
 
-# Optional: basic metadata (not required for ruff-action, but useful)
 [project]
 name = "homebridge_monitor"
 version = "0.1.0"
