@@ -1,4 +1,4 @@
-"""Integration entry point for homebridge_update."""
+"""Integration entry point for homebridge_momnitor."""
 from __future__ import annotations
 
 from typing import Any
@@ -17,13 +17,13 @@ PLATFORMS = ["binary_sensor"]
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    """Set up homebridge_update from a config entry."""
+    """Set up homebridge_momnitor from a config entry."""
     host = entry.data.get(CONF_HOST)
     if not host:
-        _LOGGER.error("No host configured for homebridge_update entry %s", entry.entry_id)
+        _LOGGER.error("No host configured for %s entry %s", DOMAIN, entry.entry_id)
         return False
 
-    # base_url expects scheme+host:port, but user supplies host:port. We accept full url or host:port.
+    # base_url expects scheme+host:port, but user may supply host:port. We accept full url or host:port.
     base_input = host
     if base_input.startswith("http://") or base_input.startswith("https://"):
         base_url = base_input.rstrip("/")
