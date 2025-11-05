@@ -77,7 +77,6 @@ def _make_update_listener(hass: HomeAssistant, entry_id: str, coordinator: Homeb
                 ent = HomebridgeUpdateBinarySensor(coordinator, key, plugin.get("name") or "plugin", is_plugin=True, plugin_meta=plugin)
                 added_entities[key] = ent
                 _LOGGER.debug("Adding new plugin entity %s", key)
-                # async_add may be a sync call, but per HA it's safe to call from listener
                 async_add([ent], update_before_add=False)
 
         # Remove plugins that disappear
