@@ -1,0 +1,38 @@
+[tool.ruff]
+# Pin the ruff version the GitHub Action should use.
+# The astral-sh/ruff-action reads this value and will install the requested version.
+version = "0.14.3"
+
+# Project settings
+line-length = 88
+target-version = ["py311"]
+
+# Files/dirs to exclude from linting
+exclude = [
+  "build",
+  "dist",
+  ".venv",
+  ".git",
+  "__pycache__",
+  ".venv/**",
+  "venv/**",
+]
+
+# Make Ruff compatible with Black where relevant
+extend-ignore = ["E203", "W503"]
+
+# Enable import-order checks (ruff's 'I' rules)
+extend-select = ["I"]
+
+[tool.ruff.per-file-ignores]
+# Allow __init__.py files to have unused imports for export-style re-exports.
+# (Adjust if you prefer to fix these instead of ignoring.)
+"custom_components/*/__init__.py" = ["F401"]
+
+# Optional: basic metadata (not required for ruff-action, but useful)
+[project]
+name = "homebridge_monitor"
+version = "0.1.0"
+description = "Home Assistant custom integration - Homebridge Monitor"
+readme = "README.md"
+license = "MIT"
