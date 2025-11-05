@@ -1,4 +1,4 @@
-"""Config flow and reauth flow for Homebridge Update integration."""
+"""Config flow and reauth flow for Homebridge Monitor integration."""
 from __future__ import annotations
 
 from typing import Any, Dict, Optional
@@ -42,7 +42,7 @@ STEP_AUTH_DATA_SCHEMA = vol.Schema(
 
 
 class HomebridgeUpdateFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
-    """Handle a config flow for homebridge_update, including reauth."""
+    """Handle a config flow for homebridge_momnitor, including reauth."""
 
     VERSION = 1
     CONNECTION_CLASS = config_entries.CONN_CLASS_LOCAL_POLL
@@ -120,7 +120,6 @@ class HomebridgeUpdateFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def async_step_reauth(self, user_input: dict[str, Any] | None = None) -> FlowResult:
         """Handle re-authentication (reauth flow)."""
-        # context contains entry_id when flow was initiated with context={"source": "reauth", "entry_id": entry_id}
         entry_id = self.context.get("entry_id")
         if not entry_id:
             _LOGGER.error("Reauth step started without entry_id in context")
@@ -133,14 +132,12 @@ class HomebridgeUpdateFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             return self.async_abort(reason="missing_entry")
 
         if user_input is None:
-            # Show username/password form
             return self.async_show_form(
                 step_id="reauth",
                 data_schema=STEP_AUTH_DATA_SCHEMA,
                 description_placeholders={"host": entry.data.get(CONF_HOST, "")},
             )
 
-        # User submitted credentials — attempt login and update the existing entry
         username = user_input["username"]
         password = user_input["password"]
 
@@ -154,14 +151,12 @@ class HomebridgeUpdateFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             _LOGGER.exception("Unexpected error during reauth")
             return self.async_show_form(step_id="reauth", data_schema=STEP_AUTH_DATA_SCHEMA, errors={"base": "unknown"})
 
-        # Update the existing config entry with the fresh token
         new_data = {**entry.data, CONF_TOKEN: token}
         if token_expires_ts is not None:
             new_data[CONF_TOKEN_EXPIRES] = int(token_expires_ts)
 
         self.hass.config_entries.async_update_entry(entry, data=new_data)
 
-        # Finish reauth flow
         return self.async_abort(reason="reauth_successful")
 
     async def _async_do_login(self, username: str, password: str) -> tuple[str, Optional[int]]:
