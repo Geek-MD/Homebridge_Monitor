@@ -1,10 +1,6 @@
 [tool.ruff]
-# Pin the ruff version the GitHub Action should use.
-version = "0.14.3"
-
-# Project settings
+# Project settings (compatible con la acción astral-sh/ruff-action)
 line-length = 88
-# Use string form for compatibility with the TOML parser used by the action
 target-version = "py311"
 
 # Files/dirs to exclude from linting
@@ -18,8 +14,7 @@ exclude = [
   "venv/**",
 ]
 
-# Make Ruff compatible with Black where relevant
-# NOTE: W503 removed for compatibility with this ruff version/action runner.
+# Ignore E203 to be compatible con Black
 extend-ignore = ["E203"]
 
 # Enable import-order checks (ruff's 'I' rules)
