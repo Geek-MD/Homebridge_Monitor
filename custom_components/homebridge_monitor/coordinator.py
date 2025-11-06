@@ -1,10 +1,10 @@
 """Coordinator to fetch Homebridge update info and manage token refresh/reauth."""
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
 import asyncio
 import logging
 import time
+from typing import Any, Dict, List, Optional
 
 import aiohttp
 import async_timeout
@@ -15,18 +15,18 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .const import (
-    SCAN_INTERVAL,
-    ENDPOINT_SWAGGER,
+    CONF_TOKEN,
+    CONF_TOKEN_EXPIRES,
+    DOMAIN,
     ENDPOINT_HOMEBRIDGE_VERSION,
     ENDPOINT_NODE_VERSION,
     ENDPOINT_PLUGINS,
     ENDPOINT_REFRESH,
-    HOMEBRIDGE_UI_PACKAGE_NAMES,
+    ENDPOINT_SWAGGER,
     HOMEBRIDGE_UI_DISPLAY_KEYS,
-    CONF_TOKEN,
-    CONF_TOKEN_EXPIRES,
+    HOMEBRIDGE_UI_PACKAGE_NAMES,
     REFRESH_MARGIN_SECONDS,
-    DOMAIN,
+    SCAN_INTERVAL,
 )
 
 _LOGGER = logging.getLogger(__name__)
