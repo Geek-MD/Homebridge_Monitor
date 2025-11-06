@@ -8,7 +8,6 @@ from typing import Any, Dict, List, Optional
 
 import aiohttp
 import async_timeout
-
 from homeassistant.components import persistent_notification
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
