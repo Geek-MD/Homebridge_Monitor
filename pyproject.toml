@@ -1,9 +1,6 @@
 [tool.ruff]
-# Project settings (compatible con la acción astral-sh/ruff-action)
 line-length = 88
 target-version = "py311"
-
-# Files/dirs to exclude from linting
 exclude = [
   "build",
   "dist",
@@ -15,13 +12,8 @@ exclude = [
 ]
 
 [tool.ruff.lint]
-# Make Ruff compatible with Black where relevant (E203)
 extend-ignore = ["E203"]
-
-# Enable import-order checks (ruff's 'I' rules)
 extend-select = ["I"]
-
-# Per-file ignores moved under the lint section
 per-file-ignores = { "custom_components/*/__init__.py" = ["F401"] }
 
 [project]
