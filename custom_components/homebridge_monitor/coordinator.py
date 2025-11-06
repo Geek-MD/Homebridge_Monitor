@@ -1,6 +1,7 @@
 """Coordinator to fetch Homebridge update info and manage token refresh/reauth."""
 from __future__ import annotations
 
+from datetime import timedelta
 import asyncio
 import logging
 import time
@@ -8,6 +9,7 @@ from typing import Any, Dict, List, Optional
 
 import aiohttp
 import async_timeout
+
 from homeassistant.components import persistent_notification
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
@@ -45,7 +47,9 @@ class HomebridgeCoordinator(DataUpdateCoordinator[dict]):
         token: str | None = None,
     ) -> None:
         """Initialize coordinator."""
-        super().__init__(hass, _LOGGER, name="homebridge_monitor", update_interval=SCAN_INTERVAL)
+        # SCAN_INTERVAL (seconds as int) -> convert to timedelta for DataUpdateCoordinator
+        update_interval = timedelta(seconds=SCAN_INTERVAL) if isinstance(SCAN_INTERVAL, (int, float)) else SCAN_INTERVAL
+        super().__init__(hass, _LOGGER, name="homebridge_monitor", update_interval=update_interval)
         self.hass = hass
         self.entry = entry
         self.base_url = base_url.rstrip("/")
