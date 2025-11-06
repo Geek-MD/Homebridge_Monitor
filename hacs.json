@@ -1,0 +1,15 @@
+{
+  "name": "Homebridge Monitor",
+  "content_in_root": false,
+  "filename": "custom_components/homebridge_monitor",
+  "manifest": "custom_components/homebridge_monitor/manifest.json",
+  "homeassistant": "2022.12.0",
+  "zip_release": false,
+  "type": "integration",
+  "description": "Monitors a Homebridge instance and its plugins for available updates and exposes binary_sensor entities.",
+  "tags": ["homebridge", "monitor", "updates", "plugins"],
+  "authors": ["Geek-MD"],
+  "domains": ["binary_sensor"],
+  "version": "0.1.0",
+  "repo_url": "https://github.com/Geek-MD/Homebridge_Monitor"
+}
