@@ -1,15 +1,14 @@
 """Coordinator to fetch Homebridge update info and manage token refresh/reauth."""
 from __future__ import annotations
 
-from datetime import timedelta
 import asyncio
 import logging
 import time
+from datetime import timedelta
 from typing import Any, Dict, List, Optional
 
 import aiohttp
 import async_timeout
-
 from homeassistant.components import persistent_notification
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
