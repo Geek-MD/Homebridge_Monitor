@@ -1,8 +1,8 @@
 """Binary sensors exposing update availability from Homebridge."""
 from __future__ import annotations
 
-from typing import Any, Callable, Dict
 import logging
+from typing import Any, Callable, Dict
 
 from homeassistant.components.binary_sensor import (
     BinarySensorDeviceClass,
