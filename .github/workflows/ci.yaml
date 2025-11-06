@@ -5,6 +5,12 @@ on:
     branches: [ main, develop ]
   pull_request:
     branches: [ main, develop ]
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to check'
+        required: true
+        default: 'main'
 
 jobs:
   lint-type-validate:
