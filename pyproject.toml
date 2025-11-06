@@ -14,15 +14,15 @@ exclude = [
   "venv/**",
 ]
 
-# Ignore E203 to be compatible con Black
+[tool.ruff.lint]
+# Make Ruff compatible with Black where relevant (E203)
 extend-ignore = ["E203"]
 
 # Enable import-order checks (ruff's 'I' rules)
 extend-select = ["I"]
 
-[tool.ruff.per-file-ignores]
-# Allow __init__.py files to have unused imports for export-style re-exports.
-"custom_components/*/__init__.py" = ["F401"]
+# Per-file ignores moved under the lint section
+per-file-ignores = { "custom_components/*/__init__.py" = ["F401"] }
 
 [project]
 name = "homebridge_monitor"
