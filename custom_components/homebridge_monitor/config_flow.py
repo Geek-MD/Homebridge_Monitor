@@ -10,16 +10,16 @@ import async_timeout
 import voluptuous as vol
 
 from homeassistant import config_entries
-from homeassistant.data_entry_flow import FlowResult
 from homeassistant.const import CONF_VERIFY_SSL
+from homeassistant.data_entry_flow import FlowResult
 from homeassistant.helpers import aiohttp_client
 
 from .const import (
-    DOMAIN,
     CONF_HOST,
     CONF_SWAGGER_PATH,
     CONF_TOKEN,
     CONF_TOKEN_EXPIRES,
+    DOMAIN,
     ENDPOINT_LOGIN,
 )
 
@@ -42,7 +42,7 @@ STEP_AUTH_DATA_SCHEMA = vol.Schema(
 
 
 class HomebridgeUpdateFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
-    """Handle a config flow for homebridge_momnitor, including reauth."""
+    """Handle a config flow for homebridge_monitor, including reauth."""
 
     VERSION = 1
     CONNECTION_CLASS = config_entries.CONN_CLASS_LOCAL_POLL
