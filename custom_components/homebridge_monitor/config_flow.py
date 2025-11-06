@@ -5,6 +5,7 @@ from datetime import datetime, timezone, timedelta
 import logging
 from typing import Any, Dict, Optional
 
+import aiohttp
 import async_timeout
 import voluptuous as vol
 
