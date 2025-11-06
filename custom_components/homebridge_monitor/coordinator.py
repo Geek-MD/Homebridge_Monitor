@@ -32,7 +32,6 @@ from .const import (
 
 _LOGGER = logging.getLogger(__name__)
 
-
 class HomebridgeCoordinator(DataUpdateCoordinator[dict]):
     """Coordinator to fetch and normalize update info from Homebridge and manage token refresh/reauth."""
 
