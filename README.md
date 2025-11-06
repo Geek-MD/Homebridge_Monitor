@@ -7,8 +7,6 @@
 ![HACS Custom Repository](https://img.shields.io/badge/HACS-Custom%20Repository-blue)
 [![Ruff](https://github.com/Geek-MD/Homebridge_Monitor/actions/workflows/ci.yaml/badge.svg?branch=main&label=Ruff)](https://github.com/Geek-MD/Homebridge_Monitor/actions/workflows/ci.yaml)
 
-<img width="200" height="200" alt="image" src="https://github.com/Geek-MD/Homebridge_Monitor/blob/main/icon.png?raw=true" />
-
 # Homebridge Monitor
 
 Homebridge Monitor is a Home Assistant custom integration that monitors a Homebridge instance and its installed plugins for available updates. It exposes binary sensors that indicate whether updates are available for Homebridge core, Homebridge UI, Node.js, and individual plugins.
