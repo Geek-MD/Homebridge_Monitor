@@ -2,6 +2,7 @@
   "domain": "homebridge_monitor",
   "name": "Homebridge Monitor",
   "codeowners": ["@Geek-MD"],
+  "config_flow": true,
   "documentation": "https://github.com/Geek-MD/Homebridge_Monitor",
   "iot_class": "local_polling",
   "requirements": [],
