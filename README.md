@@ -101,50 +101,6 @@ Example entity IDs:
 
 ---
 
-## 🔧 Development
-
-Developer tooling used in CI — pin these locally for consistent results.
-
-- Ruff (linter/formatter): ruff==0.14.3  
-  Usage:
-  ```
-  python -m pip install "ruff==0.14.3"
-  ruff check custom_components/homebridge_monitor --fix
-  ```
-
-- Mypy (type checking): mypy==1.10.0  
-  Usage:
-  ```
-  python -m pip install "mypy==1.10.0"
-  mypy --config-file mypy.ini custom_components/homebridge_monitor
-  ```
-
-- Home Assistant stubs (optional, recommended for typing):
-  ```
-  python -m pip install homeassistant-stubs
-  ```
-
-- Hassfest validation (CI uses the official action). You can run hassfest in CI; local usage requires the hassfest tool.
-
-Development recommendations:
-- Keep imports grouped and ordered (stdlib → third-party → homeassistant → local) to satisfy Ruff/isort.
-- Avoid side-effects at module import time — use lazy imports for Home Assistant-dependent imports when appropriate.
-- Use DataUpdateCoordinator for polling and centralizing API calls and error handling.
-- Keep entity unique IDs stable.
-
----
-
-## 🧪 Testing & CI
-
-This repository includes a CI workflow that runs:
-- Ruff linting (pinned version)
-- Mypy type checks
-- Hassfest validation
-
-Run them locally before creating a PR to ensure parity with CI.
-
----
-
 ## 🐛 Troubleshooting
 
 - No entities appear:
@@ -167,22 +123,14 @@ Run them locally before creating a PR to ensure parity with CI.
 
 ---
 
-## 📜 License
+## 📄 License
 
-MIT License — see [LICENSE](LICENSE) for details.
-
----
-
-## 🤝 Contributing
-
-Contributions welcome! Please:
-1. Open an issue for bugs/feature requests.  
-2. Fork the repository and create a feature branch.  
-3. Run ruff and mypy locally and ensure hassfest validation passes.  
-4. Create a pull request with tests / description of changes.
+MIT © Edison Montes [_@GeekMD_](https://github.com/Geek-MD)
 
 ---
 
-## Changelog
+<div align="center">
+  
+💻 **Proudly developed with GitHub Copilot** 🚀
 
-See GitHub Releases for a history of changes and release notes.
+</div>
