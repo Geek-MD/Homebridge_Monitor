@@ -52,6 +52,7 @@ class HomebridgeUpdateFlowHandler(config_entries.ConfigFlow):
         self._host_data: dict[str, Any] = {}
         self._base_url: Optional[str] = None
         self._reauth_entry_id: Optional[str] = None
+        self._reconfigure_entry_id: Optional[str] = None
 
     async def async_step_user(self, user_input: dict[str, Any] | None = None) -> FlowResult:
         """Initial step to ask for host:port (or full URL)."""
@@ -158,6 +159,116 @@ class HomebridgeUpdateFlowHandler(config_entries.ConfigFlow):
         self.hass.config_entries.async_update_entry(entry, data=new_data)
 
         return self.async_abort(reason="reauth_successful")
+
+    async def async_step_reconfigure(self, user_input: dict[str, Any] | None = None) -> FlowResult:
+        """Handle reconfiguration of the integration."""
+        entry_id = self.context.get("entry_id")
+        if not entry_id:
+            _LOGGER.error("Reconfigure step started without entry_id in context")
+            return self.async_abort(reason="missing_entry")
+
+        self._reconfigure_entry_id = entry_id
+        entry = self.hass.config_entries.async_get_entry(entry_id)
+        if not entry:
+            _LOGGER.error("Reconfigure entry not found: %s", entry_id)
+            return self.async_abort(reason="missing_entry")
+
+        if user_input is None:
+            # Show form with current settings as defaults
+            reconfigure_schema = vol.Schema(
+                {
+                    vol.Required(CONF_HOST, default=entry.data.get(CONF_HOST, "")): str,
+                    vol.Optional(CONF_SWAGGER_PATH, default=entry.data.get(CONF_SWAGGER_PATH, "/swagger")): str,
+                    vol.Optional(CONF_VERIFY_SSL, default=entry.data.get(CONF_VERIFY_SSL, True)): bool,
+                }
+            )
+            return self.async_show_form(
+                step_id="reconfigure",
+                data_schema=reconfigure_schema,
+                description_placeholders={"host": entry.data.get(CONF_HOST, "")},
+            )
+
+        # Process the updated settings
+        host = user_input[CONF_HOST].strip()
+        swagger_path = user_input.get(CONF_SWAGGER_PATH, "/swagger")
+        verify_ssl = user_input.get(CONF_VERIFY_SSL, True)
+
+        # Normalize base_url
+        if host.startswith("http://") or host.startswith("https://"):
+            base_url = host.rstrip("/")
+        else:
+            base_url = f"http://{host.rstrip('/')}"
+        if not swagger_path.startswith("/"):
+            swagger_path = f"/{swagger_path}"
+
+        # Store settings for auth step
+        self._host_data = {
+            CONF_HOST: host,
+            CONF_SWAGGER_PATH: swagger_path,
+            CONF_VERIFY_SSL: verify_ssl,
+        }
+        self._base_url = base_url
+
+        # Proceed to auth step to get new token
+        return await self.async_step_reconfigure_auth()
+
+    async def async_step_reconfigure_auth(self, user_input: dict[str, Any] | None = None) -> FlowResult:
+        """Handle authentication during reconfiguration."""
+        if user_input is None:
+            return self.async_show_form(
+                step_id="reconfigure_auth",
+                data_schema=STEP_AUTH_DATA_SCHEMA,
+                description_placeholders={"host": self._host_data.get(CONF_HOST, "")},
+            )
+
+        username = user_input["username"]
+        password = user_input["password"]
+
+        try:
+            token, token_expires_ts = await self._async_do_login(username, password)
+        except InvalidAuth:
+            return self.async_show_form(
+                step_id="reconfigure_auth",
+                data_schema=STEP_AUTH_DATA_SCHEMA,
+                errors={"base": "invalid_auth"},
+                description_placeholders={"host": self._host_data.get(CONF_HOST, "")},
+            )
+        except CannotConnect:
+            return self.async_show_form(
+                step_id="reconfigure_auth",
+                data_schema=STEP_AUTH_DATA_SCHEMA,
+                errors={"base": "cannot_connect"},
+                description_placeholders={"host": self._host_data.get(CONF_HOST, "")},
+            )
+        except Exception:
+            _LOGGER.exception("Unexpected error during reconfigure auth")
+            return self.async_show_form(
+                step_id="reconfigure_auth",
+                data_schema=STEP_AUTH_DATA_SCHEMA,
+                errors={"base": "unknown"},
+                description_placeholders={"host": self._host_data.get(CONF_HOST, "")},
+            )
+
+        # Update the config entry with new settings and token
+        entry = self.hass.config_entries.async_get_entry(self._reconfigure_entry_id)
+        if not entry:
+            _LOGGER.error("Entry disappeared during reconfigure: %s", self._reconfigure_entry_id)
+            return self.async_abort(reason="missing_entry")
+
+        new_data = {
+            CONF_HOST: self._host_data[CONF_HOST],
+            CONF_SWAGGER_PATH: self._host_data[CONF_SWAGGER_PATH],
+            CONF_VERIFY_SSL: self._host_data[CONF_VERIFY_SSL],
+            CONF_TOKEN: token,
+            CONF_TOKEN_EXPIRES: int(token_expires_ts) if token_expires_ts is not None else None,
+        }
+
+        self.hass.config_entries.async_update_entry(entry, data=new_data)
+
+        # Reload the integration to apply new settings
+        await self.hass.config_entries.async_reload(entry.entry_id)
+
+        return self.async_abort(reason="reconfigure_successful")
 
     async def _async_do_login(self, username: str, password: str) -> tuple[str, Optional[int]]:
         """Perform the login request and return (token, expires_epoch_seconds|None)."""
