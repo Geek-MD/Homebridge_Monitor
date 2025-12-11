@@ -164,13 +164,13 @@ class HomebridgeUpdateFlowHandler(config_entries.ConfigFlow):
         """Handle reconfiguration of the integration."""
         entry_id = self.context.get("entry_id")
         if not entry_id:
-            _LOGGER.error("Reconfigure step started without entry_id in context")
+            _LOGGER.error("Reconfigure step started without entry_id in context - this should not happen during normal flow")
             return self.async_abort(reason="missing_entry")
 
         self._reconfigure_entry_id = entry_id
         entry = self.hass.config_entries.async_get_entry(entry_id)
         if not entry:
-            _LOGGER.error("Reconfigure entry not found: %s", entry_id)
+            _LOGGER.error("Config entry %s not found during reconfigure, integration may have been removed", entry_id)
             return self.async_abort(reason="missing_entry")
 
         if user_input is None:
@@ -241,7 +241,7 @@ class HomebridgeUpdateFlowHandler(config_entries.ConfigFlow):
                 description_placeholders={"host": self._host_data.get(CONF_HOST, "")},
             )
         except Exception:
-            _LOGGER.exception("Unexpected error during reconfigure auth")
+            _LOGGER.exception("Unexpected error during authentication in reconfigure flow")
             return self.async_show_form(
                 step_id="reconfigure_auth",
                 data_schema=STEP_AUTH_DATA_SCHEMA,
@@ -252,7 +252,7 @@ class HomebridgeUpdateFlowHandler(config_entries.ConfigFlow):
         # Update the config entry with new settings and token
         entry = self.hass.config_entries.async_get_entry(self._reconfigure_entry_id)
         if not entry:
-            _LOGGER.error("Entry disappeared during reconfigure: %s", self._reconfigure_entry_id)
+            _LOGGER.error("Config entry %s unexpectedly removed during reconfiguration process", self._reconfigure_entry_id)
             return self.async_abort(reason="missing_entry")
 
         new_data = {
