@@ -1,7 +1,7 @@
-"""Constants for homebridge_momnitor integration."""
+"""Constants for homebridge_monitor integration."""
 from __future__ import annotations
 
-DOMAIN = "homebridge_momnitor"
+DOMAIN = "homebridge_monitor"
 DEFAULT_NAME = "Homebridge Monitor"
 SCAN_INTERVAL = 300  # seconds
 
