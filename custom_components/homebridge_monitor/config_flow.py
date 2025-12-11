@@ -40,10 +40,11 @@ STEP_AUTH_DATA_SCHEMA = vol.Schema(
 )
 
 
-class HomebridgeUpdateFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
+class HomebridgeUpdateFlowHandler(config_entries.ConfigFlow):
     """Handle a config flow for homebridge_monitor, including reauth."""
 
     VERSION = 1
+    DOMAIN = DOMAIN
     CONNECTION_CLASS = config_entries.CONN_CLASS_LOCAL_POLL
 
     def __init__(self) -> None:

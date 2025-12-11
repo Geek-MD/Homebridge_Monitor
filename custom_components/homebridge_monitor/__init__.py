@@ -58,6 +58,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # forward platforms
     # Mypy stub for hass.config_entries may not include async_setup_platforms;
     # suppress the attribute-defined error here.
-    hass.config_entries.async_setup_platforms(entry, PLATFORMS)  # type: ignore[attr-defined]
+    await hass.config_entries.async_setup_platforms(entry, PLATFORMS)
 
     return True

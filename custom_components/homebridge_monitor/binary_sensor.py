@@ -86,7 +86,7 @@ def _make_update_listener(hass: HomeAssistant, entry_id: str, coordinator: Homeb
             _LOGGER.debug("Removing plugin entity %s", k)
             hass.async_create_task(ent.async_remove())
 
-    return _listener
+    return _listener  # type: ignore[no-any-return]
 
 
 class HomebridgeUpdateBinarySensor(BinarySensorEntity):
