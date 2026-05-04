@@ -25,7 +25,7 @@ It exposes a **connectivity binary sensor** that turns `on` when Homebridge is r
 - **Device class `connectivity`** – integrates naturally with the Home Assistant UI and mobile apps.
 - **Config-flow setup** – configure entirely through the UI; no YAML needed.
 - **Live validation** – the setup wizard tests connectivity before saving the entry.
-- **Adjustable polling interval** – change how often HA checks Homebridge via the integration's options (5 – 3600 seconds, default 30 s).
+- **Reconfigurable connection** – change the host, port and polling interval after setup via the integration's options, with live connectivity validation.
 - **Device entry** – groups the sensor under a _Homebridge_ device with a direct link to the Homebridge web UI.
 - **HACS-compatible**.
 
@@ -71,7 +71,11 @@ After setup, click **Configure** on the integration card to adjust:
 
 | Option | Description | Default |
 |--------|-------------|---------|
+| Host | IP address or hostname of the Homebridge instance | — |
+| Port | TCP port of the Homebridge web UI | 8581 |
 | Scan interval | How often (in seconds) HA checks Homebridge connectivity | 30 |
+
+Connectivity to the new address is validated before saving.
 
 ---
 
