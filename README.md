@@ -1,8 +1,18 @@
-# Homebridge Monitor
+[![Geek-MD - HomeBridge Monitor](https://img.shields.io/static/v1?label=Geek-MD&message=Homebridge%20Monitor&color=blue&logo=github)](https://github.com/Geek-MD/Homebridge_Monitor)
+[![Stars](https://img.shields.io/github/stars/Geek-MD/Homebridge_Monitor?style=social)](https://github.com/Geek-MD/Homebridge_Monitor)
+[![Forks](https://img.shields.io/github/forks/Geek-MD/Homebridge_Monitor?style=social)](https://github.com/Geek-MD/Homebridge_Monitor)
 
-[![hacs_badge](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://github.com/hacs/integration)
-[![GitHub release](https://img.shields.io/github/v/release/Geek-MD/Homebridge_Monitor)](https://github.com/Geek-MD/Homebridge_Monitor/releases)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![GitHub Release](https://img.shields.io/github/release/Geek-MD/Homebridge_Monitor?include_prereleases&sort=semver&color=blue)](https://github.com/Geek-MD/Homebridge_Monitor/releases)
+[![License](https://img.shields.io/badge/License-MIT-blue)](https://github.com/Geek-MD/Homebridge_Monitor/blob/main/LICENSE)
+[![HACS Custom Repository](https://img.shields.io/badge/HACS-Custom%20Repository-blue)](https://hacs.xyz/)
+
+[![Ruff + Mypy + Hassfest](https://github.com/Geek-MD/Homebridge_Monitor/actions/workflows/validate.yaml/badge.svg)](https://github.com/Geek-MD/Homebridge_Monitor/actions/workflows/validate.yaml)
+[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
+[![Checked with mypy](https://www.mypy-lang.org/static/mypy_badge.svg)](https://mypy-lang.org/)
+
+![](https://github.com/Geek-MD/Homebridge_Monitor/blob/main/custom_components/homebridge_monitor/brand/logo.png)
+
+# Homebridge Monitor
 
 A custom Home Assistant integration that monitors the connectivity of a local [Homebridge](https://homebridge.io) instance.  
 It exposes a **connectivity binary sensor** that turns `on` when Homebridge is reachable and `off` when it is not – similar in spirit to the built-in [Ping (ICMP)](https://www.home-assistant.io/integrations/ping/) integration, but targeted specifically at the Homebridge web UI endpoint.
