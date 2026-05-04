@@ -1,0 +1,38 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Configure Homebridge Monitor",
+        "description": "Enter the host (IP address or hostname) and port of your Homebridge instance.",
+        "data": {
+          "host": "Host",
+          "port": "Port"
+        },
+        "data_description": {
+          "host": "IP address or hostname of the Homebridge instance (e.g. 192.168.1.100)",
+          "port": "TCP port on which the Homebridge web UI is listening (default: 8581)"
+        }
+      }
+    },
+    "abort": {
+      "already_configured": "This Homebridge instance is already configured."
+    },
+    "error": {
+      "cannot_connect": "Unable to connect to Homebridge. Verify the host and port and try again."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Homebridge Monitor options",
+        "description": "Adjust the polling interval for the connectivity check.",
+        "data": {
+          "scan_interval": "Scan interval (seconds)"
+        },
+        "data_description": {
+          "scan_interval": "How often (in seconds) Home Assistant will check if Homebridge is reachable (5 – 3600)"
+        }
+      }
+    }
+  }
+}
