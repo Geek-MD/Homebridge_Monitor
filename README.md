@@ -107,3 +107,11 @@ See [CHANGELOG.md](CHANGELOG.md).
 ## License
 
 This project is licensed under the [MIT License](LICENSE).
+
+---
+
+<div align="center">
+
+💻 **Proudly developed with GitHub Copilot** 🚀
+
+</div>
