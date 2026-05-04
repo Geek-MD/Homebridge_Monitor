@@ -25,14 +25,22 @@
     "step": {
       "init": {
         "title": "Opciones de Homebridge Monitor",
-        "description": "Ajusta el intervalo de verificación de conectividad.",
+        "description": "Modifica el host, el puerto o el intervalo de verificación de esta instancia de Homebridge.",
         "data": {
+          "host": "Host",
+          "port": "Puerto",
           "scan_interval": "Intervalo de escaneo (segundos)"
         },
         "data_description": {
+          "host": "Dirección IP o nombre de host de la instancia de Homebridge (ej. 192.168.1.100)",
+          "port": "Puerto TCP en el que escucha la interfaz web de Homebridge (predeterminado: 8581)",
           "scan_interval": "Con qué frecuencia (en segundos) Home Assistant verificará si Homebridge es accesible (5 – 3600)"
         }
       }
+    },
+    "error": {
+      "cannot_connect": "No se puede conectar a Homebridge. Verifica el host y el puerto e intenta de nuevo.",
+      "already_configured": "Esta instancia de Homebridge ya está configurada."
     }
   }
 }

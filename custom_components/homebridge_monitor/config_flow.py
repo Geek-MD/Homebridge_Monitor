@@ -59,11 +59,17 @@ def _config_schema(
 
 
 def _options_schema(
+    host: str = "",
+    port: int = DEFAULT_PORT,
     scan_interval: int = DEFAULT_SCAN_INTERVAL,
 ) -> vol.Schema:
     """Return the schema for the options step."""
     return vol.Schema(
         {
+            vol.Required(CONF_HOST, default=host): str,
+            vol.Required(CONF_PORT, default=port): vol.All(
+                vol.Coerce(int), vol.Range(min=1, max=65535)
+            ),
             vol.Required(CONF_SCAN_INTERVAL, default=scan_interval): vol.All(
                 vol.Coerce(int), vol.Range(min=5, max=3600)
             ),
@@ -126,15 +132,45 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
-        """Manage integration options."""
-        if user_input is not None:
-            return self.async_create_entry(title="", data=user_input)
+        """Manage integration options (host, port and scan interval)."""
+        errors: dict[str, str] = {}
 
+        if user_input is not None:
+            host: str = user_input[CONF_HOST].strip()
+            port: int = user_input[CONF_PORT]
+            scan_interval: int = user_input[CONF_SCAN_INTERVAL]
+
+            new_unique_id = f"{host}:{port}"
+            for entry in self.hass.config_entries.async_entries(DOMAIN):
+                if (
+                    entry.entry_id != self.config_entry.entry_id
+                    and entry.unique_id == new_unique_id
+                ):
+                    errors["base"] = "already_configured"
+                    break
+
+            if not errors and not await _test_connectivity(self.hass, host, port):
+                errors["base"] = "cannot_connect"
+
+            if not errors:
+                self.hass.config_entries.async_update_entry(
+                    self.config_entry,
+                    data={CONF_HOST: host, CONF_PORT: port},
+                    title=f"Homebridge ({host}:{port})",
+                    unique_id=new_unique_id,
+                )
+                return self.async_create_entry(
+                    title="", data={CONF_SCAN_INTERVAL: scan_interval}
+                )
+
+        current_host: str = self.config_entry.data.get(CONF_HOST, "")
+        current_port: int = self.config_entry.data.get(CONF_PORT, DEFAULT_PORT)
         current_interval: int = self.config_entry.options.get(
             CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL
         )
 
         return self.async_show_form(
             step_id="init",
-            data_schema=_options_schema(current_interval),
+            data_schema=_options_schema(current_host, current_port, current_interval),
+            errors=errors,
         )

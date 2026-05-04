@@ -25,14 +25,22 @@
     "step": {
       "init": {
         "title": "Homebridge Monitor Optionen",
-        "description": "Passe das Abfrageintervall für die Verbindungsprüfung an.",
+        "description": "Host, Port oder Abfrageintervall dieser Homebridge-Instanz anpassen.",
         "data": {
+          "host": "Host",
+          "port": "Port",
           "scan_interval": "Abfrageintervall (Sekunden)"
         },
         "data_description": {
+          "host": "IP-Adresse oder Hostname der Homebridge-Instanz (z. B. 192.168.1.100)",
+          "port": "TCP-Port, auf dem die Homebridge-Weboberfläche lauscht (Standard: 8581)",
           "scan_interval": "Wie oft (in Sekunden) Home Assistant prüft, ob Homebridge erreichbar ist (5 – 3600)"
         }
       }
+    },
+    "error": {
+      "cannot_connect": "Verbindung zu Homebridge nicht möglich. Überprüfe Host und Port und versuche es erneut.",
+      "already_configured": "Diese Homebridge-Instanz ist bereits konfiguriert."
     }
   }
 }
