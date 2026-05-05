@@ -22,6 +22,8 @@ DEFAULT_TIMEOUT: Final = 10  # seconds
 API_PATH_AUTH: Final = "/api/auth/login"
 API_PATH_HB_VERSION: Final = "/api/status/homebridge-version"
 API_PATH_PLUGINS: Final = "/api/plugins"
+API_PATH_UPDATE_HOMEBRIDGE: Final = "/api/update/homebridge"
+API_PATH_UPDATE_PLUGIN: Final = "/api/plugins/update"
 
 # Homebridge package names
 HB_PACKAGE_NAME: Final = "homebridge"

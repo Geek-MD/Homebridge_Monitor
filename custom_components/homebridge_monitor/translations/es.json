@@ -72,6 +72,17 @@
         "name": "Conectividad"
       }
     },
+    "button": {
+      "update_homebridge_core": {
+        "name": "Actualizar Homebridge Core"
+      },
+      "update_homebridge_ui": {
+        "name": "Actualizar UI de Homebridge"
+      },
+      "update_homebridge_plugins": {
+        "name": "Actualizar plugins"
+      }
+    },
     "update": {
       "homebridge_update": {
         "name": "Actualización de Homebridge"
