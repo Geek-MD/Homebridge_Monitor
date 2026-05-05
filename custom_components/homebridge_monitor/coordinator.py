@@ -15,6 +15,8 @@ from .const import (
     API_PATH_AUTH,
     API_PATH_HB_VERSION,
     API_PATH_PLUGINS,
+    API_PATH_UPDATE_HOMEBRIDGE,
+    API_PATH_UPDATE_PLUGIN,
     DEFAULT_TIMEOUT,
     DOMAIN,
     HB_UI_PACKAGE_NAME,
@@ -137,6 +139,85 @@ class HomebridgeCoordinator(DataUpdateCoordinator[HomebridgeData]):
         except (aiohttp.ClientError, asyncio.TimeoutError) as err:
             _LOGGER.debug("GET %s failed: %s", path, err)
         return None
+
+    async def _async_request(
+        self,
+        method: str,
+        path: str,
+    ) -> bool:
+        """Perform an authenticated POST/PUT request and return True on success (HTTP 2xx).
+
+        Automatically refreshes the token once on HTTP 401.
+        """
+        if self._token is None:
+            self._token = await self._async_authenticate()
+        if self._token is None:
+            _LOGGER.warning("Cannot perform %s %s: not authenticated", method, path)
+            return False
+
+        session = async_get_clientsession(self.hass)
+        url = f"http://{self.host}:{self.port}{path}"
+        headers = {"Authorization": f"Bearer {self._token}"}
+
+        for attempt in range(2):
+            try:
+                request_kwargs: dict = {
+                    "headers": headers,
+                    "timeout": aiohttp.ClientTimeout(total=DEFAULT_TIMEOUT),
+                }
+                if method.upper() == "POST":
+                    cm = session.post(url, **request_kwargs)
+                else:
+                    cm = session.put(url, **request_kwargs)
+
+                async with cm as response:
+                    if 200 <= response.status < 300:
+                        return True
+                    if response.status == 401 and attempt == 0:
+                        # Token expired – re-authenticate and retry
+                        _LOGGER.debug("Token expired during %s %s, re-authenticating…", method, path)
+                        self._token = await self._async_authenticate()
+                        if self._token is None:
+                            return False
+                        headers = {"Authorization": f"Bearer {self._token}"}
+                        continue
+                    _LOGGER.debug("%s %s returned HTTP %s", method, path, response.status)
+                    return False
+            except (aiohttp.ClientError, asyncio.TimeoutError) as err:
+                _LOGGER.debug("%s %s failed: %s", method, path, err)
+                return False
+        return False
+
+    # ------------------------------------------------------------------
+    # Update action helpers (called by button entities)
+    # ------------------------------------------------------------------
+
+    async def async_update_homebridge_core(self) -> bool:
+        """Trigger a Homebridge core update via the REST API."""
+        return await self._async_request("POST", API_PATH_UPDATE_HOMEBRIDGE)
+
+    async def async_update_ui(self) -> bool:
+        """Trigger a Homebridge UI (homebridge-config-ui-x) update via the REST API."""
+        path = f"{API_PATH_UPDATE_PLUGIN}/{HB_UI_PACKAGE_NAME}"
+        return await self._async_request("PUT", path)
+
+    async def async_update_all_plugins(self) -> list[str]:
+        """Trigger updates for all plugins with pending updates.
+
+        Returns the list of plugin names for which the update request was accepted.
+        """
+        plugins: list[PluginUpdateInfo] = list(
+            (self.data or {}).get("plugins_with_updates", [])
+        )
+        if not plugins:
+            return []
+        updated: list[str] = []
+        for plugin in plugins:
+            name: str = plugin["name"]
+            path = f"{API_PATH_UPDATE_PLUGIN}/{name}"
+            if await self._async_request("PUT", path):
+                updated.append(name)
+        return updated
 
     # ------------------------------------------------------------------
     # Main update loop

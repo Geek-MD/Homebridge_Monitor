@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-05-05
+
+### Added
+- **Diagnostic button – Update Homebridge Core** (`button.homebridge_update_homebridge_core`): pressing this button (or calling the `button.press` service on it) sends `POST /api/update/homebridge` to Homebridge and writes an `INFO` log entry to the Home Assistant log confirming the update was initiated (or a `WARNING` on failure).
+- **Diagnostic button – Update Homebridge UI** (`button.homebridge_update_homebridge_ui`): triggers `PUT /api/plugins/update/homebridge-config-ui-x` and logs the result.
+- **Diagnostic button – Update Plugins** (`button.homebridge_update_homebridge_plugins`): triggers `PUT /api/plugins/update/<name>` for every plugin that currently has a pending update (as reported by the coordinator) and logs which plugins were updated.
+- All three buttons belong to the **Diagnostic** entity category and are grouped under the Homebridge device in the *Diagnostics* section of the HA UI.
+- Token auto-refresh: if the stored JWT has expired when a button is pressed, the coordinator re-authenticates automatically before retrying the request.
+- Translations for the three new button entities in all supported languages (en, es, de, fr, pt).
+
 ## [0.2.2] - 2026-05-05
 
 ### Fixed
