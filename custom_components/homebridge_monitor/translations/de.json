@@ -94,5 +94,19 @@
         "name": "Plugin-Updates"
       }
     }
+  },
+  "services": {
+    "update_homebridge_core": {
+      "name": "Homebridge Core aktualisieren",
+      "description": "Löst ein Homebridge-Core-Update auf allen konfigurierten Homebridge-Instanzen aus."
+    },
+    "update_homebridge_ui": {
+      "name": "Homebridge UI aktualisieren",
+      "description": "Löst ein Update von homebridge-config-ui-x auf allen konfigurierten Homebridge-Instanzen aus."
+    },
+    "update_plugins": {
+      "name": "Plugins aktualisieren",
+      "description": "Löst Updates für alle Plugins mit ausstehenden Updates auf allen konfigurierten Homebridge-Instanzen aus."
+    }
   }
 }
