@@ -64,7 +64,7 @@ class HomebridgeConnectivitySensor(
     @property
     def is_on(self) -> bool | None:
         """Return True if Homebridge is reachable."""
-        return self.coordinator.data
+        return self.coordinator.data["connected"]
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:

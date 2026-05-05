@@ -3,14 +3,18 @@
     "step": {
       "user": {
         "title": "Configure Homebridge Monitor",
-        "description": "Enter the host (IP address or hostname) and port of your Homebridge instance.",
+        "description": "Enter the host (IP address or hostname), port and credentials of your Homebridge instance.",
         "data": {
           "host": "Host",
-          "port": "Port"
+          "port": "Port",
+          "username": "Username",
+          "password": "Password"
         },
         "data_description": {
           "host": "IP address or hostname of the Homebridge instance (e.g. 192.168.1.100)",
-          "port": "TCP port on which the Homebridge web UI is listening (default: 8581)"
+          "port": "TCP port on which the Homebridge web UI is listening (default: 8581)",
+          "username": "Username used to log in to the Homebridge web UI",
+          "password": "Password used to log in to the Homebridge web UI"
         }
       }
     },
@@ -18,7 +22,8 @@
       "already_configured": "This Homebridge instance is already configured."
     },
     "error": {
-      "cannot_connect": "Unable to connect to Homebridge. Verify the host and port and try again."
+      "cannot_connect": "Unable to connect to Homebridge. Verify the host and port and try again.",
+      "invalid_auth": "Invalid username or password. Verify your credentials and try again."
     }
   },
   "options": {
