@@ -95,6 +95,10 @@ class HomebridgeCoordinator(DataUpdateCoordinator[HomebridgeData]):
     async def _async_authenticate(self) -> str | None:
         """Obtain a JWT access token from Homebridge and cache it."""
         url = f"http://{self.host}:{self.port}{API_PATH_AUTH}"
+        _LOGGER.debug(
+            "Homebridge Monitor: authenticating – POST %s",
+            url,
+        )
         session = async_get_clientsession(self.hass)
         try:
             async with session.post(
@@ -102,19 +106,52 @@ class HomebridgeCoordinator(DataUpdateCoordinator[HomebridgeData]):
                 json={"username": self._username, "password": self._password},
                 timeout=aiohttp.ClientTimeout(total=DEFAULT_TIMEOUT),
             ) as response:
+                _LOGGER.debug(
+                    "Homebridge Monitor: authentication response HTTP %s from %s:%s",
+                    response.status,
+                    self.host,
+                    self.port,
+                )
                 if response.status == 201:
                     payload = await response.json()
                     token: str | None = payload.get("access_token")
-                    _LOGGER.debug("Authenticated with Homebridge at %s:%s", self.host, self.port)
+                    if token:
+                        _LOGGER.debug(
+                            "Homebridge Monitor: JWT token obtained successfully from %s:%s",
+                            self.host,
+                            self.port,
+                        )
+                    else:
+                        _LOGGER.warning(
+                            "Homebridge Monitor: authentication response from %s:%s"
+                            " did not contain an access_token (payload keys: %s)",
+                            self.host,
+                            self.port,
+                            list(payload.keys()),
+                        )
                     return token
                 _LOGGER.warning(
-                    "Authentication failed for Homebridge at %s:%s (HTTP %s)",
+                    "Homebridge Monitor: authentication failed for %s:%s"
+                    " – HTTP %s (check username/password)",
                     self.host,
                     self.port,
                     response.status,
                 )
-        except (aiohttp.ClientError, asyncio.TimeoutError) as err:
-            _LOGGER.debug("Authentication request failed: %s", err)
+        except asyncio.TimeoutError:
+            _LOGGER.debug(
+                "Homebridge Monitor: authentication request to %s:%s timed out"
+                " (timeout=%ss)",
+                self.host,
+                self.port,
+                DEFAULT_TIMEOUT,
+            )
+        except aiohttp.ClientError as err:
+            _LOGGER.debug(
+                "Homebridge Monitor: authentication request to %s:%s failed: %s",
+                self.host,
+                self.port,
+                err,
+            )
         return None
 
     async def _async_get_json(
@@ -125,19 +162,39 @@ class HomebridgeCoordinator(DataUpdateCoordinator[HomebridgeData]):
     ) -> dict | list | None:
         """Perform an authenticated GET and return parsed JSON, or None on error."""
         url = f"http://{self.host}:{self.port}{path}"
+        _LOGGER.debug("Homebridge Monitor: GET %s", url)
         try:
             async with session.get(
                 url,
                 headers=headers,
                 timeout=aiohttp.ClientTimeout(total=DEFAULT_TIMEOUT),
             ) as response:
+                _LOGGER.debug(
+                    "Homebridge Monitor: GET %s → HTTP %s",
+                    path,
+                    response.status,
+                )
                 if response.status == 200:
                     return await response.json()
                 if response.status == 401:
+                    _LOGGER.debug(
+                        "Homebridge Monitor: GET %s returned HTTP 401 – token may have expired",
+                        path,
+                    )
                     return None  # Caller handles re-auth
-                _LOGGER.debug("GET %s returned HTTP %s", path, response.status)
-        except (aiohttp.ClientError, asyncio.TimeoutError) as err:
-            _LOGGER.debug("GET %s failed: %s", path, err)
+                _LOGGER.warning(
+                    "Homebridge Monitor: GET %s returned unexpected HTTP %s",
+                    path,
+                    response.status,
+                )
+        except asyncio.TimeoutError:
+            _LOGGER.debug(
+                "Homebridge Monitor: GET %s timed out (timeout=%ss)",
+                path,
+                DEFAULT_TIMEOUT,
+            )
+        except aiohttp.ClientError as err:
+            _LOGGER.debug("Homebridge Monitor: GET %s failed: %s", path, err)
         return None
 
     async def _async_request(
@@ -150,9 +207,20 @@ class HomebridgeCoordinator(DataUpdateCoordinator[HomebridgeData]):
         Automatically refreshes the token once on HTTP 401.
         """
         if self._token is None:
+            _LOGGER.debug(
+                "Homebridge Monitor: no cached token – authenticating before %s %s",
+                method,
+                path,
+            )
             self._token = await self._async_authenticate()
         if self._token is None:
-            _LOGGER.warning("Cannot perform %s %s: not authenticated", method, path)
+            _LOGGER.warning(
+                "Homebridge Monitor: cannot perform %s %s on %s:%s – not authenticated",
+                method,
+                path,
+                self.host,
+                self.port,
+            )
             return False
 
         session = async_get_clientsession(self.hass)
@@ -160,6 +228,12 @@ class HomebridgeCoordinator(DataUpdateCoordinator[HomebridgeData]):
         headers = {"Authorization": f"Bearer {self._token}"}
 
         for attempt in range(2):
+            _LOGGER.debug(
+                "Homebridge Monitor: %s %s (attempt %d/2)",
+                method,
+                url,
+                attempt + 1,
+            )
             try:
                 request_kwargs: dict = {
                     "headers": headers,
@@ -171,20 +245,63 @@ class HomebridgeCoordinator(DataUpdateCoordinator[HomebridgeData]):
                     cm = session.put(url, **request_kwargs)
 
                 async with cm as response:
+                    _LOGGER.debug(
+                        "Homebridge Monitor: %s %s → HTTP %s",
+                        method,
+                        path,
+                        response.status,
+                    )
                     if 200 <= response.status < 300:
                         return True
                     if response.status == 401 and attempt == 0:
-                        # Token expired – re-authenticate and retry
-                        _LOGGER.debug("Token expired during %s %s, re-authenticating…", method, path)
+                        _LOGGER.debug(
+                            "Homebridge Monitor: token expired during %s %s"
+                            " – re-authenticating and retrying",
+                            method,
+                            path,
+                        )
                         self._token = await self._async_authenticate()
                         if self._token is None:
+                            _LOGGER.warning(
+                                "Homebridge Monitor: re-authentication failed"
+                                " – cannot complete %s %s on %s:%s",
+                                method,
+                                path,
+                                self.host,
+                                self.port,
+                            )
                             return False
                         headers = {"Authorization": f"Bearer {self._token}"}
                         continue
-                    _LOGGER.debug("%s %s returned HTTP %s", method, path, response.status)
+                    _LOGGER.warning(
+                        "Homebridge Monitor: %s %s on %s:%s returned HTTP %s"
+                        " – request was not accepted",
+                        method,
+                        path,
+                        self.host,
+                        self.port,
+                        response.status,
+                    )
                     return False
-            except (aiohttp.ClientError, asyncio.TimeoutError) as err:
-                _LOGGER.debug("%s %s failed: %s", method, path, err)
+            except asyncio.TimeoutError:
+                _LOGGER.warning(
+                    "Homebridge Monitor: %s %s on %s:%s timed out (timeout=%ss)",
+                    method,
+                    path,
+                    self.host,
+                    self.port,
+                    DEFAULT_TIMEOUT,
+                )
+                return False
+            except aiohttp.ClientError as err:
+                _LOGGER.warning(
+                    "Homebridge Monitor: %s %s on %s:%s failed: %s",
+                    method,
+                    path,
+                    self.host,
+                    self.port,
+                    err,
+                )
                 return False
         return False
 
@@ -194,11 +311,25 @@ class HomebridgeCoordinator(DataUpdateCoordinator[HomebridgeData]):
 
     async def async_update_homebridge_core(self) -> bool:
         """Trigger a Homebridge core update via the REST API."""
-        return await self._async_request("POST", API_PATH_UPDATE_HOMEBRIDGE)
+        _LOGGER.debug(
+            "Homebridge Monitor: requesting Homebridge core update"
+            " – PUT %s on %s:%s",
+            API_PATH_UPDATE_HOMEBRIDGE,
+            self.host,
+            self.port,
+        )
+        return await self._async_request("PUT", API_PATH_UPDATE_HOMEBRIDGE)
 
     async def async_update_ui(self) -> bool:
         """Trigger a Homebridge UI (homebridge-config-ui-x) update via the REST API."""
         path = f"{API_PATH_UPDATE_PLUGIN}/{HB_UI_PACKAGE_NAME}"
+        _LOGGER.debug(
+            "Homebridge Monitor: requesting Homebridge UI update"
+            " – PUT %s on %s:%s",
+            path,
+            self.host,
+            self.port,
+        )
         return await self._async_request("PUT", path)
 
     async def async_update_all_plugins(self) -> list[str]:
@@ -210,13 +341,46 @@ class HomebridgeCoordinator(DataUpdateCoordinator[HomebridgeData]):
             (self.data or {}).get("plugins_with_updates", [])
         )
         if not plugins:
+            _LOGGER.debug(
+                "Homebridge Monitor: no plugins with pending updates found on %s:%s"
+                " – nothing to update",
+                self.host,
+                self.port,
+            )
             return []
+        _LOGGER.debug(
+            "Homebridge Monitor: %d plugin(s) with pending updates on %s:%s: %s",
+            len(plugins),
+            self.host,
+            self.port,
+            ", ".join(p["name"] for p in plugins),
+        )
         updated: list[str] = []
+        failed: list[str] = []
         for plugin in plugins:
             name: str = plugin["name"]
             path = f"{API_PATH_UPDATE_PLUGIN}/{name}"
+            _LOGGER.debug(
+                "Homebridge Monitor: requesting update for plugin %s"
+                " (%s → %s) on %s:%s",
+                name,
+                plugin["current_version"],
+                plugin["latest_version"],
+                self.host,
+                self.port,
+            )
             if await self._async_request("PUT", path):
                 updated.append(name)
+            else:
+                failed.append(name)
+        if failed:
+            _LOGGER.warning(
+                "Homebridge Monitor: update request failed for %d plugin(s) on %s:%s: %s",
+                len(failed),
+                self.host,
+                self.port,
+                ", ".join(failed),
+            )
         return updated
 
     # ------------------------------------------------------------------
@@ -229,28 +393,52 @@ class HomebridgeCoordinator(DataUpdateCoordinator[HomebridgeData]):
 
         # 1. Check connectivity (plain HTTP – no auth required)
         url = f"http://{self.host}:{self.port}/"
+        _LOGGER.debug(
+            "Homebridge Monitor: checking connectivity – GET %s",
+            url,
+        )
         try:
             async with session.get(
                 url,
                 timeout=aiohttp.ClientTimeout(total=DEFAULT_TIMEOUT),
             ) as response:
                 _LOGGER.debug(
-                    "Homebridge at %s:%s responded with HTTP %s",
+                    "Homebridge Monitor: connectivity check %s:%s → HTTP %s",
                     self.host,
                     self.port,
                     response.status,
                 )
-        except (aiohttp.ClientError, asyncio.TimeoutError) as err:
-            _LOGGER.debug("Homebridge at %s:%s is not reachable: %s", self.host, self.port, err)
+        except asyncio.TimeoutError as err:
+            _LOGGER.debug(
+                "Homebridge Monitor: connectivity check timed out for %s:%s"
+                " (timeout=%ss)",
+                self.host,
+                self.port,
+                DEFAULT_TIMEOUT,
+            )
+            raise UpdateFailed(f"Cannot reach Homebridge: {err}") from err
+        except aiohttp.ClientError as err:
+            _LOGGER.debug(
+                "Homebridge Monitor: Homebridge at %s:%s is not reachable: %s",
+                self.host,
+                self.port,
+                err,
+            )
             raise UpdateFailed(f"Cannot reach Homebridge: {err}") from err
 
         # 2. Authenticate (refresh token when missing)
         if self._token is None:
+            _LOGGER.debug(
+                "Homebridge Monitor: no cached token – authenticating for %s:%s",
+                self.host,
+                self.port,
+            )
             self._token = await self._async_authenticate()
 
         if self._token is None:
             _LOGGER.warning(
-                "Could not authenticate with Homebridge at %s:%s – update sensors will be unavailable",
+                "Homebridge Monitor: could not authenticate with %s:%s"
+                " – update sensors will be unavailable",
                 self.host,
                 self.port,
             )
@@ -262,9 +450,20 @@ class HomebridgeCoordinator(DataUpdateCoordinator[HomebridgeData]):
         hb_payload = await self._async_get_json(session, API_PATH_HB_VERSION, headers)
         if hb_payload is None:
             # Likely a 401 – token expired, re-authenticate once
-            _LOGGER.debug("Token may have expired, re-authenticating…")
+            _LOGGER.debug(
+                "Homebridge Monitor: version fetch returned no data from %s:%s"
+                " – token may have expired; re-authenticating",
+                self.host,
+                self.port,
+            )
             self._token = await self._async_authenticate()
             if self._token is None:
+                _LOGGER.warning(
+                    "Homebridge Monitor: re-authentication failed for %s:%s"
+                    " – update data unavailable this cycle",
+                    self.host,
+                    self.port,
+                )
                 return _empty_data(connected=True)
             headers = {"Authorization": f"Bearer {self._token}"}
             hb_payload = await self._async_get_json(session, API_PATH_HB_VERSION, headers)
@@ -275,10 +474,23 @@ class HomebridgeCoordinator(DataUpdateCoordinator[HomebridgeData]):
         hb_current: str | None = hb_payload.get("installedVersion")
         hb_latest: str | None = hb_payload.get("latestVersion")
         hb_update: bool = bool(hb_payload.get("updateAvailable", False))
+        _LOGGER.debug(
+            "Homebridge Monitor: Homebridge core – installed=%s latest=%s update_available=%s",
+            hb_current,
+            hb_latest,
+            hb_update,
+        )
 
         # 4. Fetch installed plugins list (includes homebridge-config-ui-x)
         plugins_payload = await self._async_get_json(session, API_PATH_PLUGINS, headers)
         if not isinstance(plugins_payload, list):
+            _LOGGER.debug(
+                "Homebridge Monitor: plugins endpoint returned unexpected data"
+                " type (%s) from %s:%s – skipping plugin info",
+                type(plugins_payload).__name__,
+                self.host,
+                self.port,
+            )
             plugins_payload = []
 
         ui_current: str | None = None
@@ -298,6 +510,14 @@ class HomebridgeCoordinator(DataUpdateCoordinator[HomebridgeData]):
                 ui_current = installed
                 ui_latest = latest
                 ui_update = update_available
+                _LOGGER.debug(
+                    "Homebridge Monitor: Homebridge UI (%s) – installed=%s"
+                    " latest=%s update_available=%s",
+                    name,
+                    ui_current,
+                    ui_latest,
+                    ui_update,
+                )
             elif update_available and installed and latest:
                 plugins_with_updates.append(
                     PluginUpdateInfo(
@@ -306,6 +526,24 @@ class HomebridgeCoordinator(DataUpdateCoordinator[HomebridgeData]):
                         latest_version=latest,
                     )
                 )
+
+        if plugins_with_updates:
+            _LOGGER.debug(
+                "Homebridge Monitor: %d plugin(s) with pending updates on %s:%s: %s",
+                len(plugins_with_updates),
+                self.host,
+                self.port,
+                ", ".join(
+                    f"{p['name']} ({p['current_version']} → {p['latest_version']})"
+                    for p in plugins_with_updates
+                ),
+            )
+        else:
+            _LOGGER.debug(
+                "Homebridge Monitor: all plugins are up to date on %s:%s",
+                self.host,
+                self.port,
+            )
 
         return HomebridgeData(
             connected=True,

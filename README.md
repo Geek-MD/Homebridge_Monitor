@@ -26,6 +26,7 @@ It exposes a **connectivity binary sensor** that turns `on` when Homebridge is r
 - **REST API authentication** – the setup wizard asks for a username and password, validates them against the Homebridge API, and stores the credentials securely.
 - **Update sensors** – three `update` entities report whether a new version of Homebridge core, Homebridge UI, or any installed plugin is available.
 - **Diagnostic buttons** – three `button` entities (in the *Diagnostics* section of the device) let you trigger Homebridge core, UI, and plugin updates directly from the HA UI or from **Developer Tools → Actions** (`button.press`).
+- **Domain services** – the same three update actions are also exposed as first-class Home Assistant services under the `homebridge_monitor` domain (`homebridge_monitor.update_homebridge_core`, `homebridge_monitor.update_homebridge_ui`, `homebridge_monitor.update_plugins`) and appear directly in **Developer Tools → Actions**.
 - **Token refresh** – the coordinator automatically re-authenticates when the JWT access token expires (HTTP 401), keeping the integration running without manual intervention.
 - **Config-flow setup** – configure entirely through the UI; no YAML needed.
 - **Live validation** – the setup wizard tests both connectivity and credentials before saving the entry.
@@ -97,7 +98,7 @@ Both connectivity and credentials are validated before saving.
 | `update.<name>_homebridge_update` | `update` | `firmware` | — | `on` when a Homebridge core update is available |
 | `update.<name>_homebridge_ui_update` | `update` | `firmware` | — | `on` when a Homebridge UI update is available |
 | `update.<name>_plugins_update` | `update` | `firmware` | — | `on` when one or more plugin updates are available |
-| `button.<name>_update_homebridge_core` | `button` | — | `diagnostic` | Triggers a Homebridge core update (`POST /api/update/homebridge`) |
+| `button.<name>_update_homebridge_core` | `button` | — | `diagnostic` | Triggers a Homebridge core update (`PUT /api/update/homebridge`) |
 | `button.<name>_update_homebridge_ui` | `button` | — | `diagnostic` | Triggers a Homebridge UI update (`PUT /api/plugins/update/homebridge-config-ui-x`) |
 | `button.<name>_update_homebridge_plugins` | `button` | — | `diagnostic` | Triggers updates for all plugins with pending updates |
 
@@ -136,6 +137,25 @@ target:
 
 Replace `button.homebridge_update_homebridge_core` with any of the three entity IDs listed in the table above.  
 When a button is pressed the coordinator logs an `INFO` entry on success or a `WARNING` entry on failure to the Home Assistant log.
+
+### Domain services
+
+The same three update actions are also available as standalone Home Assistant services under the `homebridge_monitor` domain.  
+They appear in **Developer Tools → Actions** without needing to know the button entity IDs:
+
+| Service | Description |
+|---------|-------------|
+| `homebridge_monitor.update_homebridge_core` | Triggers a Homebridge core update (`PUT /api/update/homebridge`) |
+| `homebridge_monitor.update_homebridge_ui` | Triggers a Homebridge UI update (`PUT /api/plugins/update/homebridge-config-ui-x`) |
+| `homebridge_monitor.update_plugins` | Triggers updates for all plugins with pending updates |
+
+Example usage in an automation:
+
+```yaml
+action: homebridge_monitor.update_homebridge_core
+```
+
+> **Note:** if you have multiple Homebridge instances configured, each service call acts on **all** of them simultaneously.
 
 ---
 

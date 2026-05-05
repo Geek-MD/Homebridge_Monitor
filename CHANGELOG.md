@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.1] - 2026-05-05
+
+### Fixed
+- **Homebridge core update failure**: `async_update_homebridge_core` was sending `POST /api/update/homebridge` instead of the correct `PUT /api/update/homebridge` required by the Homebridge Config UI X REST API. This caused the button to always log a `WARNING` and never trigger the update.
+
+### Added
+- **Domain-level services** (`homebridge_monitor.update_homebridge_core`, `homebridge_monitor.update_homebridge_ui`, `homebridge_monitor.update_plugins`): the three update actions are now registered as first-class Home Assistant services under the `homebridge_monitor` domain and appear in **Developer Tools → Actions** without needing to locate the `button.press` action manually.
+  - Services are registered when the first config entry is loaded and removed when the last one is unloaded.
+  - Service descriptions are defined in `services.yaml` and translated in all supported languages (en, es, de, fr, pt).
+- **Richer logging throughout the integration**: every significant step now emits a structured `DEBUG` (or `WARNING` on failure) log entry with full context – URL, HTTP method, response status, token lifecycle events, version numbers, and plugin update details – making it much easier to diagnose connectivity or authentication issues from the Home Assistant log.
+
 ## [0.3.0] - 2026-05-05
 
 ### Added

@@ -1,0 +1,20 @@
+update_homebridge_core:
+  name: Update Homebridge Core
+  description: >
+    Triggers a Homebridge core update on all configured Homebridge instances.
+    The update is initiated via PUT /api/update/homebridge and logged to the
+    Home Assistant log.
+
+update_homebridge_ui:
+  name: Update Homebridge UI
+  description: >
+    Triggers an update of homebridge-config-ui-x on all configured Homebridge
+    instances. The update is initiated via PUT /api/plugins/update/homebridge-config-ui-x
+    and logged to the Home Assistant log.
+
+update_plugins:
+  name: Update Plugins
+  description: >
+    Triggers updates for all plugins that currently have a pending update on
+    all configured Homebridge instances. Each plugin is updated individually
+    via PUT /api/plugins/update/{name} and the results are logged.

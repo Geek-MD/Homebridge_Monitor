@@ -71,20 +71,25 @@ class HomebridgeUpdateCoreButton(
     async def async_press(self) -> None:
         """Trigger the Homebridge core update and log the result."""
         _LOGGER.info(
-            "Homebridge Monitor: triggering Homebridge core update on %s:%s",
+            "Homebridge Monitor: [%s] triggering Homebridge core update on %s:%s",
+            self.entity_id,
             self.coordinator.host,
             self.coordinator.port,
         )
         success = await self.coordinator.async_update_homebridge_core()
         if success:
             _LOGGER.info(
-                "Homebridge Monitor: Homebridge core update successfully initiated on %s:%s",
+                "Homebridge Monitor: [%s] Homebridge core update successfully"
+                " initiated on %s:%s",
+                self.entity_id,
                 self.coordinator.host,
                 self.coordinator.port,
             )
         else:
             _LOGGER.warning(
-                "Homebridge Monitor: failed to initiate Homebridge core update on %s:%s",
+                "Homebridge Monitor: [%s] failed to initiate Homebridge core update"
+                " on %s:%s – check previous log entries for the HTTP error detail",
+                self.entity_id,
                 self.coordinator.host,
                 self.coordinator.port,
             )
@@ -113,20 +118,25 @@ class HomebridgeUpdateUIButton(
     async def async_press(self) -> None:
         """Trigger the Homebridge UI update and log the result."""
         _LOGGER.info(
-            "Homebridge Monitor: triggering Homebridge UI update on %s:%s",
+            "Homebridge Monitor: [%s] triggering Homebridge UI update on %s:%s",
+            self.entity_id,
             self.coordinator.host,
             self.coordinator.port,
         )
         success = await self.coordinator.async_update_ui()
         if success:
             _LOGGER.info(
-                "Homebridge Monitor: Homebridge UI update successfully initiated on %s:%s",
+                "Homebridge Monitor: [%s] Homebridge UI update successfully"
+                " initiated on %s:%s",
+                self.entity_id,
                 self.coordinator.host,
                 self.coordinator.port,
             )
         else:
             _LOGGER.warning(
-                "Homebridge Monitor: failed to initiate Homebridge UI update on %s:%s",
+                "Homebridge Monitor: [%s] failed to initiate Homebridge UI update"
+                " on %s:%s – check previous log entries for the HTTP error detail",
+                self.entity_id,
                 self.coordinator.host,
                 self.coordinator.port,
             )
@@ -154,23 +164,31 @@ class HomebridgeUpdatePluginsButton(
 
     async def async_press(self) -> None:
         """Trigger updates for all plugins with pending updates and log the result."""
+        pending = self.coordinator.data.get("plugins_with_updates", []) if self.coordinator.data else []
         _LOGGER.info(
-            "Homebridge Monitor: triggering plugin updates on %s:%s",
+            "Homebridge Monitor: [%s] triggering plugin updates on %s:%s"
+            " (%d plugin(s) pending)",
+            self.entity_id,
             self.coordinator.host,
             self.coordinator.port,
+            len(pending),
         )
         updated = await self.coordinator.async_update_all_plugins()
         if updated:
             _LOGGER.info(
-                "Homebridge Monitor: plugin updates successfully initiated on %s:%s – plugins: %s",
+                "Homebridge Monitor: [%s] plugin updates successfully initiated"
+                " on %s:%s – %d plugin(s): %s",
+                self.entity_id,
                 self.coordinator.host,
                 self.coordinator.port,
+                len(updated),
                 ", ".join(updated),
             )
         else:
             _LOGGER.info(
-                "Homebridge Monitor: no plugin updates initiated on %s:%s"
-                " (no pending updates or request failed)",
+                "Homebridge Monitor: [%s] no plugin updates initiated on %s:%s"
+                " (no pending updates or all requests failed)",
+                self.entity_id,
                 self.coordinator.host,
                 self.coordinator.port,
             )
