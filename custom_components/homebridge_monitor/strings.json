@@ -16,10 +16,23 @@
           "username": "Username used to log in to the Homebridge web UI",
           "password": "Password used to log in to the Homebridge web UI"
         }
+      },
+      "reauth_confirm": {
+        "title": "Re-authenticate Homebridge Monitor",
+        "description": "Enter the credentials for your Homebridge instance at {host}:{port}.",
+        "data": {
+          "username": "Username",
+          "password": "Password"
+        },
+        "data_description": {
+          "username": "Username used to log in to the Homebridge web UI",
+          "password": "Password used to log in to the Homebridge web UI"
+        }
       }
     },
     "abort": {
-      "already_configured": "This Homebridge instance is already configured."
+      "already_configured": "This Homebridge instance is already configured.",
+      "reauth_successful": "Re-authentication was successful."
     },
     "error": {
       "cannot_connect": "Unable to connect to Homebridge. Verify the host and port and try again.",
@@ -30,22 +43,27 @@
     "step": {
       "init": {
         "title": "Homebridge Monitor options",
-        "description": "Modify the host, port or polling interval for this Homebridge instance.",
+        "description": "Modify the host, port, credentials or polling interval for this Homebridge instance.",
         "data": {
           "host": "Host",
           "port": "Port",
+          "username": "Username",
+          "password": "Password",
           "scan_interval": "Scan interval (seconds)"
         },
         "data_description": {
           "host": "IP address or hostname of the Homebridge instance (e.g. 192.168.1.100)",
           "port": "TCP port on which the Homebridge web UI is listening (default: 8581)",
+          "username": "Username used to log in to the Homebridge web UI",
+          "password": "Password used to log in to the Homebridge web UI",
           "scan_interval": "How often (in seconds) Home Assistant will check if Homebridge is reachable (5 – 3600)"
         }
       }
     },
     "error": {
       "cannot_connect": "Unable to connect to Homebridge. Verify the host and port and try again.",
-      "already_configured": "This Homebridge instance is already configured."
+      "already_configured": "This Homebridge instance is already configured.",
+      "invalid_auth": "Invalid username or password. Verify your credentials and try again."
     }
   }
 }

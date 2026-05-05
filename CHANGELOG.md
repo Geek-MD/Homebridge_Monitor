@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.1] - 2026-05-05
+
+### Fixed
+- **KeyError on migration**: when upgrading from v0.1.x (which stored no `username`/`password` in the config entry) to v0.2.x, `async_setup_entry` raised `KeyError: 'username'` and the integration failed to load. This release adds `async_migrate_entry` (VERSION 1 → 2) which fills in empty credential placeholders so the entry can be loaded again.
+- **Reauth notification**: if credentials are missing or empty after migration, `async_setup_entry` now calls `entry.async_start_reauth()` and returns `False`. Home Assistant automatically shows a persistent **"Action required"** notification in the integrations panel with a direct link to the credential re-entry form – no manual deletion and re-setup required.
+
+### Changed
+- **Config entry schema** bumped to VERSION 2 to track the addition of credentials.
+- **Options flow** now includes `username` and `password` fields so credentials can be updated at any time from the integration's **Configure** menu, without going through a full reauth.
+- **Reauth flow** (`async_step_reauth_confirm`) added to `FlowHandler`: validates connectivity and credentials before saving, and reloads the entry on success.
+
 ## [0.2.0] - 2026-05-05
 
 ### Added
