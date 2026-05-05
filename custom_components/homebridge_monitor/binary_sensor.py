@@ -12,7 +12,7 @@ from homeassistant.components.binary_sensor import (
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import DOMAIN, SENSOR_NAME
+from .const import DOMAIN
 from .coordinator import HomebridgeCoordinator
 
 if TYPE_CHECKING:
@@ -39,7 +39,7 @@ class HomebridgeConnectivitySensor(
     """Binary sensor that reports Homebridge connectivity."""
 
     _attr_has_entity_name = True
-    _attr_name = SENSOR_NAME
+    _attr_translation_key = "connectivity"
     _attr_device_class = BinarySensorDeviceClass.CONNECTIVITY
 
     def __init__(
