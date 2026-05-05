@@ -18,7 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Coordinator** now returns a structured `HomebridgeData` typed dictionary instead of a plain `bool`; the connectivity binary sensor reads `data["connected"]`.
 - **Config flow** initial step extended with `username` and `password` fields. An `invalid_auth` error is shown when the supplied credentials are rejected by Homebridge.
 
-
+## [0.1.1] - 2026-05-04
 
 ### Changed
 - **Options flow** now allows editing the Homebridge host (IP address or hostname) and port in addition to the scan interval. Connectivity is validated before saving, and the entry title, unique ID, and stored data are updated automatically.
