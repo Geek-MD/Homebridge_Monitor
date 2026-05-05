@@ -3,14 +3,18 @@
     "step": {
       "user": {
         "title": "Configurar Homebridge Monitor",
-        "description": "Ingresa el host (dirección IP o nombre de host) y el puerto de tu instancia de Homebridge.",
+        "description": "Ingresa el host (dirección IP o nombre de host), el puerto y las credenciales de tu instancia de Homebridge.",
         "data": {
           "host": "Host",
-          "port": "Puerto"
+          "port": "Puerto",
+          "username": "Usuario",
+          "password": "Contraseña"
         },
         "data_description": {
           "host": "Dirección IP o nombre de host de la instancia de Homebridge (ej. 192.168.1.100)",
-          "port": "Puerto TCP en el que escucha la interfaz web de Homebridge (predeterminado: 8581)"
+          "port": "Puerto TCP en el que escucha la interfaz web de Homebridge (predeterminado: 8581)",
+          "username": "Usuario utilizado para iniciar sesión en la interfaz web de Homebridge",
+          "password": "Contraseña utilizada para iniciar sesión en la interfaz web de Homebridge"
         }
       }
     },
@@ -18,7 +22,8 @@
       "already_configured": "Esta instancia de Homebridge ya está configurada."
     },
     "error": {
-      "cannot_connect": "No se puede conectar a Homebridge. Verifica el host y el puerto e intenta de nuevo."
+      "cannot_connect": "No se puede conectar a Homebridge. Verifica el host y el puerto e intenta de nuevo.",
+      "invalid_auth": "Usuario o contraseña inválidos. Verifica tus credenciales e intenta de nuevo."
     }
   },
   "options": {

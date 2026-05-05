@@ -13,9 +13,12 @@ from homeassistant.core import callback
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .const import (
+    API_PATH_AUTH,
     CONF_HOST,
+    CONF_PASSWORD,
     CONF_PORT,
     CONF_SCAN_INTERVAL,
+    CONF_USERNAME,
     DEFAULT_PORT,
     DEFAULT_SCAN_INTERVAL,
     DEFAULT_TIMEOUT,
@@ -43,9 +46,27 @@ async def _test_connectivity(hass: HomeAssistant, host: str, port: int) -> bool:
         return False
 
 
+async def _test_authentication(
+    hass: HomeAssistant, host: str, port: int, username: str, password: str
+) -> bool:
+    """Return True if the credentials are accepted by the Homebridge REST API."""
+    url = f"http://{host}:{port}{API_PATH_AUTH}"
+    session = async_get_clientsession(hass)
+    try:
+        async with session.post(
+            url,
+            json={"username": username, "password": password},
+            timeout=aiohttp.ClientTimeout(total=DEFAULT_TIMEOUT),
+        ) as response:
+            return response.status == 201
+    except (aiohttp.ClientError, asyncio.TimeoutError):
+        return False
+
+
 def _config_schema(
     host: str = "",
     port: int = DEFAULT_PORT,
+    username: str = "",
 ) -> vol.Schema:
     """Return the schema for the initial configuration step."""
     return vol.Schema(
@@ -54,6 +75,8 @@ def _config_schema(
             vol.Required(CONF_PORT, default=port): vol.All(
                 vol.Coerce(int), vol.Range(min=1, max=65535)
             ),
+            vol.Required(CONF_USERNAME, default=username): str,
+            vol.Required(CONF_PASSWORD): str,
         }
     )
 
@@ -88,22 +111,31 @@ class FlowHandler(
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
-        """Handle the initial step – ask for host and port."""
+        """Handle the initial step – ask for host, port and credentials."""
         errors: dict[str, str] = {}
 
         if user_input is not None:
             host: str = user_input[CONF_HOST].strip()
             port: int = user_input[CONF_PORT]
+            username: str = user_input[CONF_USERNAME].strip()
+            password: str = user_input[CONF_PASSWORD]
 
             await self.async_set_unique_id(f"{host}:{port}")
             self._abort_if_unique_id_configured()
 
             if not await _test_connectivity(self.hass, host, port):
                 errors["base"] = "cannot_connect"
+            elif not await _test_authentication(self.hass, host, port, username, password):
+                errors["base"] = "invalid_auth"
             else:
                 return self.async_create_entry(
                     title=f"Homebridge ({host}:{port})",
-                    data={CONF_HOST: host, CONF_PORT: port},
+                    data={
+                        CONF_HOST: host,
+                        CONF_PORT: port,
+                        CONF_USERNAME: username,
+                        CONF_PASSWORD: password,
+                    },
                 )
 
         return self.async_show_form(
@@ -111,6 +143,7 @@ class FlowHandler(
             data_schema=_config_schema(
                 host=user_input[CONF_HOST] if user_input else "",
                 port=user_input[CONF_PORT] if user_input else DEFAULT_PORT,
+                username=user_input[CONF_USERNAME] if user_input else "",
             )
             if user_input
             else _config_schema(),
@@ -155,7 +188,12 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             if not errors:
                 self.hass.config_entries.async_update_entry(
                     self.config_entry,
-                    data={CONF_HOST: host, CONF_PORT: port},
+                    data={
+                        CONF_HOST: host,
+                        CONF_PORT: port,
+                        CONF_USERNAME: self.config_entry.data.get(CONF_USERNAME, ""),
+                        CONF_PASSWORD: self.config_entry.data.get(CONF_PASSWORD, ""),
+                    },
                     title=f"Homebridge ({host}:{port})",
                     unique_id=new_unique_id,
                 )
