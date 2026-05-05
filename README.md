@@ -23,10 +23,13 @@ It exposes a **connectivity binary sensor** that turns `on` when Homebridge is r
 
 - **Connectivity binary sensor** – `on` = connected, `off` = disconnected.
 - **Device class `connectivity`** – integrates naturally with the Home Assistant UI and mobile apps.
+- **REST API authentication** – the setup wizard asks for a username and password, validates them against the Homebridge API, and stores the credentials securely.
+- **Update sensors** – three `update` entities report whether a new version of Homebridge core, Homebridge UI, or any installed plugin is available.
+- **Token refresh** – the coordinator automatically re-authenticates when the JWT access token expires (HTTP 401), keeping the integration running without manual intervention.
 - **Config-flow setup** – configure entirely through the UI; no YAML needed.
-- **Live validation** – the setup wizard tests connectivity before saving the entry.
+- **Live validation** – the setup wizard tests both connectivity and credentials before saving the entry.
 - **Reconfigurable connection** – change the host, port and polling interval after setup via the integration's options, with live connectivity validation.
-- **Device entry** – groups the sensor under a _Homebridge_ device with a direct link to the Homebridge web UI.
+- **Device entry** – groups all sensors under a _Homebridge_ device with a direct link to the Homebridge web UI.
 - **HACS-compatible**.
 
 ---
@@ -63,7 +66,9 @@ It exposes a **connectivity binary sensor** that turns `on` when Homebridge is r
 2. Search for **Homebridge Monitor**.
 3. Enter the **host** (IP address or hostname) and **port** of your Homebridge instance.  
    The default Homebridge web UI port is **8581**.
-4. Click **Submit**. Home Assistant will verify the connection before saving.
+4. Enter your Homebridge **username** and **password**.  
+   These credentials are used to obtain a JWT access token from the Homebridge REST API.
+5. Click **Submit**. Home Assistant will verify both connectivity and credentials before saving.
 
 ### Options
 
@@ -84,13 +89,31 @@ Connectivity to the new address is validated before saving.
 | Entity | Domain | Device class | Description |
 |--------|--------|--------------|-------------|
 | `binary_sensor.<name>_connectivity` | `binary_sensor` | `connectivity` | `on` when Homebridge is reachable |
+| `update.<name>_homebridge_update` | `update` | `firmware` | `on` when a Homebridge core update is available |
+| `update.<name>_homebridge_ui_update` | `update` | `firmware` | `on` when a Homebridge UI update is available |
+| `update.<name>_plugins_update` | `update` | `firmware` | `on` when one or more plugin updates are available |
 
 ### Attributes
+
+#### `binary_sensor.<name>_connectivity`
 
 | Attribute | Description |
 |-----------|-------------|
 | `host` | Configured host |
 | `port` | Configured port |
+
+#### `update.<name>_homebridge_update` and `update.<name>_homebridge_ui_update`
+
+| Attribute | Description |
+|-----------|-------------|
+| `current_version` | Currently installed version |
+| `latest_version` | Latest available version |
+
+#### `update.<name>_plugins_update`
+
+| Attribute | Description |
+|-----------|-------------|
+| `plugins_with_updates` | List of plugins with updates, each containing the plugin name and its installed and latest versions |
 
 ---
 
