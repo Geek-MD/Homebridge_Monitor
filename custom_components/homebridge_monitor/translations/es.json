@@ -16,10 +16,23 @@
           "username": "Usuario utilizado para iniciar sesión en la interfaz web de Homebridge",
           "password": "Contraseña utilizada para iniciar sesión en la interfaz web de Homebridge"
         }
+      },
+      "reauth_confirm": {
+        "title": "Reautenticar Homebridge Monitor",
+        "description": "Ingresa las credenciales de tu instancia de Homebridge en {host}:{port}.",
+        "data": {
+          "username": "Usuario",
+          "password": "Contraseña"
+        },
+        "data_description": {
+          "username": "Usuario utilizado para iniciar sesión en la interfaz web de Homebridge",
+          "password": "Contraseña utilizada para iniciar sesión en la interfaz web de Homebridge"
+        }
       }
     },
     "abort": {
-      "already_configured": "Esta instancia de Homebridge ya está configurada."
+      "already_configured": "Esta instancia de Homebridge ya está configurada.",
+      "reauth_successful": "La reautenticación fue exitosa."
     },
     "error": {
       "cannot_connect": "No se puede conectar a Homebridge. Verifica el host y el puerto e intenta de nuevo.",
@@ -30,22 +43,27 @@
     "step": {
       "init": {
         "title": "Opciones de Homebridge Monitor",
-        "description": "Modifica el host, el puerto o el intervalo de verificación de esta instancia de Homebridge.",
+        "description": "Modifica el host, el puerto, las credenciales o el intervalo de verificación de esta instancia de Homebridge.",
         "data": {
           "host": "Host",
           "port": "Puerto",
+          "username": "Usuario",
+          "password": "Contraseña",
           "scan_interval": "Intervalo de escaneo (segundos)"
         },
         "data_description": {
           "host": "Dirección IP o nombre de host de la instancia de Homebridge (ej. 192.168.1.100)",
           "port": "Puerto TCP en el que escucha la interfaz web de Homebridge (predeterminado: 8581)",
+          "username": "Usuario utilizado para iniciar sesión en la interfaz web de Homebridge",
+          "password": "Contraseña utilizada para iniciar sesión en la interfaz web de Homebridge",
           "scan_interval": "Con qué frecuencia (en segundos) Home Assistant verificará si Homebridge es accesible (5 – 3600)"
         }
       }
     },
     "error": {
       "cannot_connect": "No se puede conectar a Homebridge. Verifica el host y el puerto e intenta de nuevo.",
-      "already_configured": "Esta instancia de Homebridge ya está configurada."
+      "already_configured": "Esta instancia de Homebridge ya está configurada.",
+      "invalid_auth": "Usuario o contraseña inválidos. Verifica tus credenciales e intenta de nuevo."
     }
   }
 }

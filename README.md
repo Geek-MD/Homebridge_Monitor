@@ -28,7 +28,7 @@ It exposes a **connectivity binary sensor** that turns `on` when Homebridge is r
 - **Token refresh** – the coordinator automatically re-authenticates when the JWT access token expires (HTTP 401), keeping the integration running without manual intervention.
 - **Config-flow setup** – configure entirely through the UI; no YAML needed.
 - **Live validation** – the setup wizard tests both connectivity and credentials before saving the entry.
-- **Reconfigurable connection** – change the host, port and polling interval after setup via the integration's options, with live connectivity validation.
+- **Reconfigurable connection** – change the host, port, credentials and polling interval after setup via the integration's options, with live connectivity and authentication validation.
 - **Device entry** – groups all sensors under a _Homebridge_ device with a direct link to the Homebridge web UI.
 - **HACS-compatible**.
 
@@ -78,9 +78,13 @@ After setup, click **Configure** on the integration card to adjust:
 |--------|-------------|---------|
 | Host | IP address or hostname of the Homebridge instance | — |
 | Port | TCP port of the Homebridge web UI | 8581 |
+| Username | Username for the Homebridge web UI | — |
+| Password | Password for the Homebridge web UI | — |
 | Scan interval | How often (in seconds) HA checks Homebridge connectivity | 30 |
 
-Connectivity to the new address is validated before saving.
+Both connectivity and credentials are validated before saving.
+
+> **Upgrading from v0.1.x?** After updating to v0.2.1, Home Assistant will show an **"Action required"** notification for the Homebridge Monitor integration. Click it to open the re-authentication form and enter your Homebridge username and password. The integration will reload automatically once credentials are saved.
 
 ---
 
