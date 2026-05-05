@@ -25,6 +25,7 @@ It exposes a **connectivity binary sensor** that turns `on` when Homebridge is r
 - **Device class `connectivity`** – integrates naturally with the Home Assistant UI and mobile apps.
 - **REST API authentication** – the setup wizard asks for a username and password, validates them against the Homebridge API, and stores the credentials securely.
 - **Update sensors** – three `update` entities report whether a new version of Homebridge core, Homebridge UI, or any installed plugin is available.
+- **Diagnostic buttons** – three `button` entities (in the *Diagnostics* section of the device) let you trigger Homebridge core, UI, and plugin updates directly from the HA UI or from **Developer Tools → Actions** (`button.press`).
 - **Token refresh** – the coordinator automatically re-authenticates when the JWT access token expires (HTTP 401), keeping the integration running without manual intervention.
 - **Config-flow setup** – configure entirely through the UI; no YAML needed.
 - **Live validation** – the setup wizard tests both connectivity and credentials before saving the entry.
@@ -90,12 +91,15 @@ Both connectivity and credentials are validated before saving.
 
 ## Entities
 
-| Entity | Domain | Device class | Description |
-|--------|--------|--------------|-------------|
-| `binary_sensor.<name>_connectivity` | `binary_sensor` | `connectivity` | `on` when Homebridge is reachable |
-| `update.<name>_homebridge_update` | `update` | `firmware` | `on` when a Homebridge core update is available |
-| `update.<name>_homebridge_ui_update` | `update` | `firmware` | `on` when a Homebridge UI update is available |
-| `update.<name>_plugins_update` | `update` | `firmware` | `on` when one or more plugin updates are available |
+| Entity | Domain | Device class | Entity category | Description |
+|--------|--------|--------------|-----------------|-------------|
+| `binary_sensor.<name>_connectivity` | `binary_sensor` | `connectivity` | — | `on` when Homebridge is reachable |
+| `update.<name>_homebridge_update` | `update` | `firmware` | — | `on` when a Homebridge core update is available |
+| `update.<name>_homebridge_ui_update` | `update` | `firmware` | — | `on` when a Homebridge UI update is available |
+| `update.<name>_plugins_update` | `update` | `firmware` | — | `on` when one or more plugin updates are available |
+| `button.<name>_update_homebridge_core` | `button` | — | `diagnostic` | Triggers a Homebridge core update (`POST /api/update/homebridge`) |
+| `button.<name>_update_homebridge_ui` | `button` | — | `diagnostic` | Triggers a Homebridge UI update (`PUT /api/plugins/update/homebridge-config-ui-x`) |
+| `button.<name>_update_homebridge_plugins` | `button` | — | `diagnostic` | Triggers updates for all plugins with pending updates |
 
 ### Attributes
 
@@ -118,6 +122,20 @@ Both connectivity and credentials are validated before saving.
 | Attribute | Description |
 |-----------|-------------|
 | `plugins_with_updates` | List of plugins with updates, each containing the plugin name and its installed and latest versions |
+
+### Diagnostic buttons
+
+The three `button` entities belong to the **Diagnostics** category and are visible in the device's *Diagnostics* card.  
+You can also call them from **Developer Tools → Actions** using the standard `button.press` action:
+
+```yaml
+action: button.press
+target:
+  entity_id: button.homebridge_update_homebridge_core
+```
+
+Replace `button.homebridge_update_homebridge_core` with any of the three entity IDs listed in the table above.  
+When a button is pressed the coordinator logs an `INFO` entry on success or a `WARNING` entry on failure to the Home Assistant log.
 
 ---
 
