@@ -65,5 +65,23 @@
       "already_configured": "This Homebridge instance is already configured.",
       "invalid_auth": "Invalid username or password. Verify your credentials and try again."
     }
+  },
+  "entity": {
+    "binary_sensor": {
+      "connectivity": {
+        "name": "Connectivity"
+      }
+    },
+    "update": {
+      "homebridge_update": {
+        "name": "Homebridge Update"
+      },
+      "ui_update": {
+        "name": "Homebridge UI Update"
+      },
+      "plugins_update": {
+        "name": "Plugins Update"
+      }
+    }
   }
 }

@@ -26,9 +26,3 @@ API_PATH_PLUGINS: Final = "/api/plugins"
 # Homebridge package names
 HB_PACKAGE_NAME: Final = "homebridge"
 HB_UI_PACKAGE_NAME: Final = "homebridge-config-ui-x"
-
-# Sensor names
-SENSOR_NAME: Final = "Connectivity"
-SENSOR_HB_UPDATE: Final = "Homebridge Update"
-SENSOR_UI_UPDATE: Final = "Homebridge UI Update"
-SENSOR_PLUGINS_UPDATE: Final = "Plugins Update"

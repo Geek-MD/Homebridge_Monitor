@@ -65,5 +65,23 @@
       "already_configured": "Esta instância do Homebridge já está configurada.",
       "invalid_auth": "Utilizador ou palavra-passe inválidos. Verifique as suas credenciais e tente novamente."
     }
+  },
+  "entity": {
+    "binary_sensor": {
+      "connectivity": {
+        "name": "Conectividade"
+      }
+    },
+    "update": {
+      "homebridge_update": {
+        "name": "Atualização do Homebridge"
+      },
+      "ui_update": {
+        "name": "Atualização da UI do Homebridge"
+      },
+      "plugins_update": {
+        "name": "Atualização de plugins"
+      }
+    }
   }
 }

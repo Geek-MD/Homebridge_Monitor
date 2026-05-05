@@ -9,12 +9,7 @@ from homeassistant.components.update import UpdateDeviceClass, UpdateEntity
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import (
-    DOMAIN,
-    SENSOR_HB_UPDATE,
-    SENSOR_PLUGINS_UPDATE,
-    SENSOR_UI_UPDATE,
-)
+from .const import DOMAIN
 from .coordinator import HomebridgeCoordinator, PluginUpdateInfo
 
 if TYPE_CHECKING:
@@ -58,7 +53,7 @@ class HomebridgeUpdateEntity(
     """Update entity that reports whether a Homebridge update is available."""
 
     _attr_has_entity_name = True
-    _attr_name = SENSOR_HB_UPDATE
+    _attr_translation_key = "homebridge_update"
     _attr_device_class = UpdateDeviceClass.FIRMWARE
     _attr_title = "Homebridge"
 
@@ -103,7 +98,7 @@ class HomebridgeUIUpdateEntity(
     """Update entity that reports whether a Homebridge UI update is available."""
 
     _attr_has_entity_name = True
-    _attr_name = SENSOR_UI_UPDATE
+    _attr_translation_key = "ui_update"
     _attr_device_class = UpdateDeviceClass.FIRMWARE
     _attr_title = "Homebridge UI"
 
@@ -148,7 +143,7 @@ class HomebridgePluginsUpdateEntity(
     """Update entity that reports whether any Homebridge plugin has an update."""
 
     _attr_has_entity_name = True
-    _attr_name = SENSOR_PLUGINS_UPDATE
+    _attr_translation_key = "plugins_update"
     _attr_device_class = UpdateDeviceClass.FIRMWARE
     _attr_title = "Homebridge Plugins"
 
