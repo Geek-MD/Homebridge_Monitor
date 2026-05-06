@@ -27,6 +27,8 @@ _LOGGER = logging.getLogger(__name__)
 PLATFORMS: list[Platform] = [Platform.BINARY_SENSOR, Platform.BUTTON, Platform.UPDATE]
 
 SERVICE_UPDATE_PLUGINS = "update_plugins"
+SERVICE_UPDATE_HOMEBRIDGE_CORE = "update_homebridge_core"
+SERVICE_UPDATE_HOMEBRIDGE_UI = "update_homebridge_ui"
 
 
 async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
@@ -71,7 +73,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
-    # Register domain-level service (only once – on the first loaded entry)
+    # Register domain-level services (only once – on the first loaded entry)
     if not hass.services.has_service(DOMAIN, SERVICE_UPDATE_PLUGINS):
 
         async def _handle_update_plugins(_call: ServiceCall) -> None:
@@ -82,6 +84,34 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         _LOGGER.debug(
             "Homebridge Monitor: registered domain service (%s)",
             SERVICE_UPDATE_PLUGINS,
+        )
+
+    if not hass.services.has_service(DOMAIN, SERVICE_UPDATE_HOMEBRIDGE_CORE):
+
+        async def _handle_update_homebridge_core(_call: ServiceCall) -> None:
+            for coord in hass.data[DOMAIN].values():
+                await coord.async_update_homebridge_core()
+
+        hass.services.async_register(
+            DOMAIN, SERVICE_UPDATE_HOMEBRIDGE_CORE, _handle_update_homebridge_core
+        )
+        _LOGGER.debug(
+            "Homebridge Monitor: registered domain service (%s)",
+            SERVICE_UPDATE_HOMEBRIDGE_CORE,
+        )
+
+    if not hass.services.has_service(DOMAIN, SERVICE_UPDATE_HOMEBRIDGE_UI):
+
+        async def _handle_update_homebridge_ui(_call: ServiceCall) -> None:
+            for coord in hass.data[DOMAIN].values():
+                await coord.async_update_ui()
+
+        hass.services.async_register(
+            DOMAIN, SERVICE_UPDATE_HOMEBRIDGE_UI, _handle_update_homebridge_ui
+        )
+        _LOGGER.debug(
+            "Homebridge Monitor: registered domain service (%s)",
+            SERVICE_UPDATE_HOMEBRIDGE_UI,
         )
 
     entry.async_on_unload(entry.add_update_listener(async_reload_entry))
@@ -97,9 +127,13 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         # Remove domain services when the last entry is unloaded
         if not hass.data[DOMAIN]:
             hass.services.async_remove(DOMAIN, SERVICE_UPDATE_PLUGINS)
+            hass.services.async_remove(DOMAIN, SERVICE_UPDATE_HOMEBRIDGE_CORE)
+            hass.services.async_remove(DOMAIN, SERVICE_UPDATE_HOMEBRIDGE_UI)
             _LOGGER.debug(
-                "Homebridge Monitor: removed domain service (%s)",
+                "Homebridge Monitor: removed domain services (%s, %s, %s)",
                 SERVICE_UPDATE_PLUGINS,
+                SERVICE_UPDATE_HOMEBRIDGE_CORE,
+                SERVICE_UPDATE_HOMEBRIDGE_UI,
             )
     return unload_ok
 

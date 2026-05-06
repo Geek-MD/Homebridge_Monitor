@@ -73,6 +73,12 @@
       }
     },
     "button": {
+      "update_homebridge_core": {
+        "name": "Update Homebridge Core"
+      },
+      "update_homebridge_ui": {
+        "name": "Update Homebridge UI"
+      },
       "update_homebridge_plugins": {
         "name": "Update Plugins"
       }
@@ -93,6 +99,14 @@
     "update_plugins": {
       "name": "Update Plugins",
       "description": "Triggers updates for all plugins with pending updates on all configured Homebridge instances."
+    },
+    "update_homebridge_core": {
+      "name": "Update Homebridge Core",
+      "description": "Triggers an update of the Homebridge core package on all configured Homebridge instances."
+    },
+    "update_homebridge_ui": {
+      "name": "Update Homebridge UI",
+      "description": "Triggers an update of the Homebridge Config UI X package on all configured Homebridge instances."
     }
   }
 }

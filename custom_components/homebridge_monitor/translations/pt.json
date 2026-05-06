@@ -73,6 +73,12 @@
       }
     },
     "button": {
+      "update_homebridge_core": {
+        "name": "Atualizar Homebridge Core"
+      },
+      "update_homebridge_ui": {
+        "name": "Atualizar Homebridge UI"
+      },
       "update_homebridge_plugins": {
         "name": "Atualizar plugins"
       }
@@ -93,6 +99,14 @@
     "update_plugins": {
       "name": "Atualizar plugins",
       "description": "Inicia as atualizações de todos os plugins com atualizações pendentes em todas as instâncias do Homebridge configuradas."
+    },
+    "update_homebridge_core": {
+      "name": "Atualizar Homebridge Core",
+      "description": "Inicia a atualização do pacote principal do Homebridge em todas as instâncias configuradas."
+    },
+    "update_homebridge_ui": {
+      "name": "Atualizar Homebridge UI",
+      "description": "Inicia a atualização do pacote Homebridge Config UI X em todas as instâncias configuradas."
     }
   }
 }

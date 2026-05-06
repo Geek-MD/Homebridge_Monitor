@@ -18,6 +18,7 @@ from .const import (
     API_PATH_UPDATE_PLUGIN,
     DEFAULT_TIMEOUT,
     DOMAIN,
+    HB_PACKAGE_NAME,
     HB_UI_PACKAGE_NAME,
 )
 
@@ -292,6 +293,58 @@ class HomebridgeCoordinator(DataUpdateCoordinator[HomebridgeData]):
     # ------------------------------------------------------------------
     # Update action helper (called by button entity)
     # ------------------------------------------------------------------
+
+    async def async_update_homebridge_core(self) -> bool:
+        """Trigger a Homebridge core update via POST /api/plugins/update/homebridge.
+
+        Returns True if the request was accepted.
+        """
+        path = f"{API_PATH_UPDATE_PLUGIN}/{HB_PACKAGE_NAME}"
+        _LOGGER.debug(
+            "Homebridge Monitor: requesting Homebridge core update on %s:%s",
+            self.host,
+            self.port,
+        )
+        result = await self._async_request(path)
+        if result:
+            _LOGGER.info(
+                "Homebridge Monitor: Homebridge core update successfully initiated on %s:%s",
+                self.host,
+                self.port,
+            )
+        else:
+            _LOGGER.warning(
+                "Homebridge Monitor: Homebridge core update request failed on %s:%s",
+                self.host,
+                self.port,
+            )
+        return result
+
+    async def async_update_ui(self) -> bool:
+        """Trigger a Homebridge UI update via POST /api/plugins/update/homebridge-config-ui-x.
+
+        Returns True if the request was accepted.
+        """
+        path = f"{API_PATH_UPDATE_PLUGIN}/{HB_UI_PACKAGE_NAME}"
+        _LOGGER.debug(
+            "Homebridge Monitor: requesting Homebridge UI update on %s:%s",
+            self.host,
+            self.port,
+        )
+        result = await self._async_request(path)
+        if result:
+            _LOGGER.info(
+                "Homebridge Monitor: Homebridge UI update successfully initiated on %s:%s",
+                self.host,
+                self.port,
+            )
+        else:
+            _LOGGER.warning(
+                "Homebridge Monitor: Homebridge UI update request failed on %s:%s",
+                self.host,
+                self.port,
+            )
+        return result
 
     async def async_update_all_plugins(self) -> list[str]:
         """Trigger updates for all plugins with pending updates.
