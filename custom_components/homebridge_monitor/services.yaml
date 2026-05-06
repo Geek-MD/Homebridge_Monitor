@@ -1,3 +1,10 @@
+reauthenticate:
+  name: Reauthenticate
+  description: >
+    Forces a token refresh when the current JWT is still valid, or a full
+    re-authentication when it has expired (or is absent). Useful for
+    proactively renewing the session without waiting for the next poll cycle.
+
 update_plugins:
   name: Update Plugins
   description: >

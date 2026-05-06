@@ -25,8 +25,8 @@ It exposes a **connectivity binary sensor** that turns `on` when Homebridge is r
 - **Device class `connectivity`** – integrates naturally with the Home Assistant UI and mobile apps.
 - **REST API authentication** – the setup wizard asks for a username and password, validates them against the Homebridge API, and stores the credentials securely.
 - **Update sensors** – three `update` entities report whether a new version of Homebridge core, Homebridge UI, or any installed plugin is available.
-- **Diagnostic buttons** – three `button` entities (in the *Diagnostics* section of the device) let you trigger Homebridge core, UI, and plugin updates directly from the HA UI or from **Developer Tools → Actions** (`button.press`).
-- **Domain services** – the same three update actions are also exposed as first-class Home Assistant services under the `homebridge_monitor` domain (`homebridge_monitor.update_homebridge_core`, `homebridge_monitor.update_homebridge_ui`, `homebridge_monitor.update_plugins`) and appear directly in **Developer Tools → Actions**.
+- **Diagnostic buttons** – four `button` entities (in the *Diagnostics* section of the device) let you trigger Homebridge core, UI, and plugin updates, as well as a forced token refresh/re-authentication, directly from the HA UI or from **Developer Tools → Actions** (`button.press`).
+- **Domain services** – the same four actions are also exposed as first-class Home Assistant services under the `homebridge_monitor` domain (`homebridge_monitor.update_homebridge_core`, `homebridge_monitor.update_homebridge_ui`, `homebridge_monitor.update_plugins`, `homebridge_monitor.reauthenticate`) and appear directly in **Developer Tools → Actions**.
 - **Proactive token validation** – before every poll cycle the coordinator calls `GET /api/auth/check`; if the token has expired it is refreshed via `POST /api/auth/refresh` before falling back to a full re-login, so the integration keeps running transparently when the JWT expires (~8 h).
 - **Config-flow setup** – configure entirely through the UI; no YAML needed.
 - **Live validation** – the setup wizard tests both connectivity and credentials before saving the entry.
@@ -101,6 +101,7 @@ Both connectivity and credentials are validated before saving.
 | `button.<name>_update_homebridge_core` | `button` | — | `diagnostic` | Triggers a Homebridge core update (`POST /api/plugins/update/homebridge`) |
 | `button.<name>_update_homebridge_ui` | `button` | — | `diagnostic` | Triggers a Homebridge UI update (`POST /api/plugins/update/homebridge-config-ui-x`) |
 | `button.<name>_update_homebridge_plugins` | `button` | — | `diagnostic` | Triggers updates for all plugins with pending updates |
+| `button.<name>_reauthenticate` | `button` | — | `diagnostic` | Forces a token refresh (if valid) or full re-authentication (if expired/absent) |
 
 ### Attributes
 
@@ -148,6 +149,7 @@ They appear in **Developer Tools → Actions** without needing to know the butto
 | `homebridge_monitor.update_homebridge_core` | Triggers a Homebridge core update (`POST /api/plugins/update/homebridge`) |
 | `homebridge_monitor.update_homebridge_ui` | Triggers a Homebridge UI update (`POST /api/plugins/update/homebridge-config-ui-x`) |
 | `homebridge_monitor.update_plugins` | Triggers updates for all plugins with pending updates |
+| `homebridge_monitor.reauthenticate` | Forces a token refresh (if token still valid) or full re-authentication (if expired/absent) |
 
 Example usage in an automation:
 

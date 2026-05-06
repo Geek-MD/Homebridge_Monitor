@@ -81,6 +81,9 @@
       },
       "update_homebridge_plugins": {
         "name": "Actualizar plugins"
+      },
+      "reauthenticate": {
+        "name": "Reautenticar"
       }
     },
     "update": {
@@ -96,6 +99,10 @@
     }
   },
   "services": {
+    "reauthenticate": {
+      "name": "Reautenticar",
+      "description": "Fuerza un refresco del token cuando el JWT actual sigue vigente, o una reautenticación completa cuando ha expirado o no está disponible."
+    },
     "update_plugins": {
       "name": "Actualizar plugins",
       "description": "Inicia las actualizaciones de los plugins indicados (o de todos los que tienen actualizaciones pendientes si no se especifica ninguno) en todas las instancias configuradas.",

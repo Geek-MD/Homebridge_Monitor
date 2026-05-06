@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.3] - 2026-05-06
+
+### Added
+- **Reauthenticate button** (`button.<name>_reauthenticate`) and domain service (`homebridge_monitor.reauthenticate`): pressing the button (or calling the service) forces an immediate token renewal without waiting for the next poll cycle.
+  - If the cached JWT is **still valid** (HTTP 200 on `GET /api/auth/check`) → forces a lightweight `POST /api/auth/refresh` to obtain a fresh token; falls back to full login on refresh failure.
+  - If the JWT has **expired** (HTTP 401) or is **absent** → performs a full `POST /api/auth/login`.
+  - Network errors during the validity check → attempts refresh first, then falls back to full login.
+
 ## [0.4.2] - 2026-05-06
 
 ### Changed

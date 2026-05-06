@@ -81,6 +81,9 @@
       },
       "update_homebridge_plugins": {
         "name": "Plugins aktualisieren"
+      },
+      "reauthenticate": {
+        "name": "Neu authentifizieren"
       }
     },
     "update": {
@@ -96,6 +99,10 @@
     }
   },
   "services": {
+    "reauthenticate": {
+      "name": "Neu authentifizieren",
+      "description": "Erzwingt eine Token-Aktualisierung, wenn das aktuelle JWT noch gültig ist, oder eine vollständige Neuauthentifizierung, wenn es abgelaufen oder nicht vorhanden ist."
+    },
     "update_plugins": {
       "name": "Plugins aktualisieren",
       "description": "Löst Updates für die angegebenen Plugins (oder alle Plugins mit ausstehenden Updates, falls keine Liste angegeben wird) auf allen konfigurierten Homebridge-Instanzen aus.",

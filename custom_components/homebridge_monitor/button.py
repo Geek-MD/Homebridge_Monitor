@@ -33,6 +33,7 @@ async def async_setup_entry(
             HomebridgeUpdateCoreButton(coordinator, config_entry),
             HomebridgeUpdateUIButton(coordinator, config_entry),
             HomebridgeUpdatePluginsButton(coordinator, config_entry),
+            HomebridgeReauthenticateButton(coordinator, config_entry),
         ]
     )
 
@@ -160,3 +161,34 @@ class HomebridgeUpdatePluginsButton(
                 self.coordinator.host,
                 self.coordinator.port,
             )
+
+
+class HomebridgeReauthenticateButton(
+    CoordinatorEntity[HomebridgeCoordinator], ButtonEntity
+):
+    """Button that forces a token refresh or full re-authentication."""
+
+    _attr_has_entity_name = True
+    _attr_translation_key = "reauthenticate"
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
+
+    def __init__(
+        self,
+        coordinator: HomebridgeCoordinator,
+        config_entry: ConfigEntry,
+    ) -> None:
+        """Initialize the button."""
+        super().__init__(coordinator)
+        self._config_entry = config_entry
+        self._attr_unique_id = f"{DOMAIN}_{config_entry.entry_id}_reauthenticate"
+        self._attr_device_info = _device_info(coordinator, config_entry)
+
+    async def async_press(self) -> None:
+        """Force a token refresh (if token is valid) or full re-authentication."""
+        _LOGGER.info(
+            "Homebridge Monitor: [%s] forcing re-authentication on %s:%s",
+            self.entity_id,
+            self.coordinator.host,
+            self.coordinator.port,
+        )
+        await self.coordinator.async_force_reauthenticate()

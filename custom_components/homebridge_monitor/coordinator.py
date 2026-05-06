@@ -581,6 +581,115 @@ class HomebridgeCoordinator(DataUpdateCoordinator[HomebridgeData]):
             )
         return updated
 
+    async def async_force_reauthenticate(self) -> bool:
+        """Force a token refresh or full re-authentication.
+
+        Strategy:
+        - No cached token → full login.
+        - Cached token still valid (HTTP 200 on /api/auth/check) → force a
+          lightweight refresh via POST /api/auth/refresh (obtains a new JWT
+          even though the current one is still accepted).  Falls back to a full
+          login if the refresh call fails.
+        - Cached token expired (HTTP 401 on /api/auth/check) → full login.
+        - Network error during check → attempt refresh; fall back to full login.
+
+        Returns True if a usable token is available after the operation.
+        """
+        _LOGGER.debug(
+            "Homebridge Monitor: forced re-authentication requested for %s:%s",
+            self.host,
+            self.port,
+        )
+
+        if self._token is None:
+            _LOGGER.debug(
+                "Homebridge Monitor: no cached token – performing full login for %s:%s",
+                self.host,
+                self.port,
+            )
+            self._token = await self._async_authenticate()
+            if self._token:
+                _LOGGER.info(
+                    "Homebridge Monitor: forced re-authentication succeeded for %s:%s",
+                    self.host,
+                    self.port,
+                )
+            else:
+                _LOGGER.warning(
+                    "Homebridge Monitor: forced re-authentication failed for %s:%s",
+                    self.host,
+                    self.port,
+                )
+            return self._token is not None
+
+        # Token exists – check whether it is still valid.
+        url = f"http://{self.host}:{self.port}{API_PATH_AUTH_CHECK}"
+        session = async_get_clientsession(self.hass)
+        token_valid: bool | None = None  # None = unknown (network error)
+        try:
+            async with session.get(
+                url,
+                headers={"Authorization": f"Bearer {self._token}"},
+                timeout=aiohttp.ClientTimeout(total=DEFAULT_TIMEOUT),
+            ) as response:
+                _LOGGER.debug(
+                    "Homebridge Monitor: token check for forced re-auth → HTTP %s from %s:%s",
+                    response.status,
+                    self.host,
+                    self.port,
+                )
+                token_valid = response.status == 200
+        except (asyncio.TimeoutError, aiohttp.ClientError) as err:
+            _LOGGER.debug(
+                "Homebridge Monitor: token check for forced re-auth on %s:%s failed: %s"
+                " – will attempt refresh",
+                self.host,
+                self.port,
+                err,
+            )
+
+        if token_valid:
+            # Token still valid → force a refresh to obtain a fresh JWT.
+            _LOGGER.debug(
+                "Homebridge Monitor: token still valid on %s:%s"
+                " – forcing refresh to obtain a new token",
+                self.host,
+                self.port,
+            )
+            new_token = await self._async_refresh_token()
+            if new_token:
+                self._token = new_token
+                _LOGGER.info(
+                    "Homebridge Monitor: token refreshed successfully"
+                    " (forced) for %s:%s",
+                    self.host,
+                    self.port,
+                )
+                return True
+            _LOGGER.debug(
+                "Homebridge Monitor: forced refresh failed on %s:%s"
+                " – falling back to full login",
+                self.host,
+                self.port,
+            )
+
+        # Token expired, refresh failed, or network error → full login.
+        self._token = await self._async_authenticate()
+        if self._token:
+            _LOGGER.info(
+                "Homebridge Monitor: forced re-authentication (full login)"
+                " succeeded for %s:%s",
+                self.host,
+                self.port,
+            )
+        else:
+            _LOGGER.warning(
+                "Homebridge Monitor: forced re-authentication failed for %s:%s",
+                self.host,
+                self.port,
+            )
+        return self._token is not None
+
     # ------------------------------------------------------------------
     # Main update loop
     # ------------------------------------------------------------------
