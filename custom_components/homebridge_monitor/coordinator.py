@@ -13,6 +13,8 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, Upda
 
 from .const import (
     API_PATH_AUTH,
+    API_PATH_AUTH_CHECK,
+    API_PATH_AUTH_REFRESH,
     API_PATH_HB_VERSION,
     API_PATH_PLUGINS,
     API_PATH_UPDATE_PLUGIN,
@@ -154,6 +156,146 @@ class HomebridgeCoordinator(DataUpdateCoordinator[HomebridgeData]):
             )
         return None
 
+    async def _async_refresh_token(self) -> str | None:
+        """Attempt to refresh the cached JWT using POST /api/auth/refresh.
+
+        Returns the new token on success, None on failure.
+        The caller is responsible for updating ``self._token``.
+        """
+        if self._token is None:
+            return None
+        url = f"http://{self.host}:{self.port}{API_PATH_AUTH_REFRESH}"
+        _LOGGER.debug("Homebridge Monitor: refreshing token – POST %s", url)
+        session = async_get_clientsession(self.hass)
+        try:
+            async with session.post(
+                url,
+                headers={"Authorization": f"Bearer {self._token}"},
+                timeout=aiohttp.ClientTimeout(total=DEFAULT_TIMEOUT),
+            ) as response:
+                _LOGGER.debug(
+                    "Homebridge Monitor: token refresh response HTTP %s from %s:%s",
+                    response.status,
+                    self.host,
+                    self.port,
+                )
+                if response.status == 200:
+                    payload = await response.json()
+                    token: str | None = payload.get("access_token")
+                    if token:
+                        _LOGGER.debug(
+                            "Homebridge Monitor: token refreshed successfully from %s:%s",
+                            self.host,
+                            self.port,
+                        )
+                    else:
+                        _LOGGER.warning(
+                            "Homebridge Monitor: token refresh response from %s:%s"
+                            " did not contain an access_token (payload keys: %s)",
+                            self.host,
+                            self.port,
+                            list(payload.keys()),
+                        )
+                    return token
+        except asyncio.TimeoutError:
+            _LOGGER.debug(
+                "Homebridge Monitor: token refresh request to %s:%s timed out"
+                " (timeout=%ss)",
+                self.host,
+                self.port,
+                DEFAULT_TIMEOUT,
+            )
+        except aiohttp.ClientError as err:
+            _LOGGER.debug(
+                "Homebridge Monitor: token refresh request to %s:%s failed: %s",
+                self.host,
+                self.port,
+                err,
+            )
+        return None
+
+    async def _async_ensure_fresh_token(self) -> bool:
+        """Ensure a valid JWT is cached before making authenticated requests.
+
+        Strategy (in order):
+        1. No token cached → full login via POST /api/auth/login.
+        2. Token cached → verify via GET /api/auth/check.
+           - HTTP 200: token still valid, nothing to do.
+           - HTTP 401: try POST /api/auth/refresh; fall back to full login on failure.
+           - Network error: assume token is still valid to avoid unnecessary re-auth.
+
+        Returns True if a usable token is available, False otherwise.
+        """
+        if self._token is None:
+            _LOGGER.debug(
+                "Homebridge Monitor: no cached token – authenticating for %s:%s",
+                self.host,
+                self.port,
+            )
+            self._token = await self._async_authenticate()
+            return self._token is not None
+
+        # Token exists – verify it is still accepted by Homebridge.
+        url = f"http://{self.host}:{self.port}{API_PATH_AUTH_CHECK}"
+        session = async_get_clientsession(self.hass)
+        try:
+            async with session.get(
+                url,
+                headers={"Authorization": f"Bearer {self._token}"},
+                timeout=aiohttp.ClientTimeout(total=DEFAULT_TIMEOUT),
+            ) as response:
+                _LOGGER.debug(
+                    "Homebridge Monitor: token check → HTTP %s from %s:%s",
+                    response.status,
+                    self.host,
+                    self.port,
+                )
+                if response.status == 200:
+                    _LOGGER.debug(
+                        "Homebridge Monitor: token is still valid for %s:%s",
+                        self.host,
+                        self.port,
+                    )
+                    return True
+                if response.status == 401:
+                    _LOGGER.debug(
+                        "Homebridge Monitor: token expired on %s:%s"
+                        " – attempting refresh",
+                        self.host,
+                        self.port,
+                    )
+                    new_token = await self._async_refresh_token()
+                    if new_token:
+                        self._token = new_token
+                        return True
+                    _LOGGER.debug(
+                        "Homebridge Monitor: refresh failed on %s:%s"
+                        " – falling back to full login",
+                        self.host,
+                        self.port,
+                    )
+                    self._token = await self._async_authenticate()
+                    return self._token is not None
+        except asyncio.TimeoutError:
+            _LOGGER.debug(
+                "Homebridge Monitor: token check timed out for %s:%s"
+                " (timeout=%ss) – assuming token still valid",
+                self.host,
+                self.port,
+                DEFAULT_TIMEOUT,
+            )
+        except aiohttp.ClientError as err:
+            _LOGGER.debug(
+                "Homebridge Monitor: token check for %s:%s failed: %s"
+                " – assuming token still valid",
+                self.host,
+                self.port,
+                err,
+            )
+        # Network error during check – keep existing token and let the caller
+        # handle any subsequent 401 via the normal retry path.
+        return True
+
     async def _async_get_json(
         self,
         session: aiohttp.ClientSession,
@@ -246,10 +388,19 @@ class HomebridgeCoordinator(DataUpdateCoordinator[HomebridgeData]):
                     if response.status == 401 and attempt == 0:
                         _LOGGER.debug(
                             "Homebridge Monitor: token expired during POST %s"
-                            " – re-authenticating and retrying",
+                            " – attempting refresh before retry",
                             path,
                         )
-                        self._token = await self._async_authenticate()
+                        new_token = await self._async_refresh_token()
+                        if new_token:
+                            self._token = new_token
+                        else:
+                            _LOGGER.debug(
+                                "Homebridge Monitor: refresh failed"
+                                " – falling back to full login for POST %s",
+                                path,
+                            )
+                            self._token = await self._async_authenticate()
                         if self._token is None:
                             _LOGGER.warning(
                                 "Homebridge Monitor: re-authentication failed"
@@ -440,16 +591,8 @@ class HomebridgeCoordinator(DataUpdateCoordinator[HomebridgeData]):
             )
             raise UpdateFailed(f"Cannot reach Homebridge: {err}") from err
 
-        # 2. Authenticate (refresh token when missing)
-        if self._token is None:
-            _LOGGER.debug(
-                "Homebridge Monitor: no cached token – authenticating for %s:%s",
-                self.host,
-                self.port,
-            )
-            self._token = await self._async_authenticate()
-
-        if self._token is None:
+        # 2. Ensure a valid token is available (check → refresh → full login).
+        if not await self._async_ensure_fresh_token():
             _LOGGER.warning(
                 "Homebridge Monitor: could not authenticate with %s:%s"
                 " – update sensors will be unavailable",
@@ -463,24 +606,14 @@ class HomebridgeCoordinator(DataUpdateCoordinator[HomebridgeData]):
         # 3. Fetch Homebridge version / update info
         hb_payload = await self._async_get_json(session, API_PATH_HB_VERSION, headers)
         if hb_payload is None:
-            # Likely a 401 – token expired, re-authenticate once
+            # Unexpected failure after token was verified – skip this cycle.
             _LOGGER.debug(
                 "Homebridge Monitor: version fetch returned no data from %s:%s"
-                " – token may have expired; re-authenticating",
+                " – skipping this update cycle",
                 self.host,
                 self.port,
             )
-            self._token = await self._async_authenticate()
-            if self._token is None:
-                _LOGGER.warning(
-                    "Homebridge Monitor: re-authentication failed for %s:%s"
-                    " – update data unavailable this cycle",
-                    self.host,
-                    self.port,
-                )
-                return _empty_data(connected=True)
-            headers = {"Authorization": f"Bearer {self._token}"}
-            hb_payload = await self._async_get_json(session, API_PATH_HB_VERSION, headers)
+            return _empty_data(connected=True)
 
         if not isinstance(hb_payload, dict):
             hb_payload = {}
