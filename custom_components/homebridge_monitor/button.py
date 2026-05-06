@@ -69,30 +69,14 @@ class HomebridgeUpdateCoreButton(
         self._attr_device_info = _device_info(coordinator, config_entry)
 
     async def async_press(self) -> None:
-        """Trigger the Homebridge core update and log the result."""
+        """Trigger a Homebridge core update."""
         _LOGGER.info(
             "Homebridge Monitor: [%s] triggering Homebridge core update on %s:%s",
             self.entity_id,
             self.coordinator.host,
             self.coordinator.port,
         )
-        success = await self.coordinator.async_update_homebridge_core()
-        if success:
-            _LOGGER.info(
-                "Homebridge Monitor: [%s] Homebridge core update successfully"
-                " initiated on %s:%s",
-                self.entity_id,
-                self.coordinator.host,
-                self.coordinator.port,
-            )
-        else:
-            _LOGGER.warning(
-                "Homebridge Monitor: [%s] failed to initiate Homebridge core update"
-                " on %s:%s – check previous log entries for the HTTP error detail",
-                self.entity_id,
-                self.coordinator.host,
-                self.coordinator.port,
-            )
+        await self.coordinator.async_update_homebridge_core()
 
 
 class HomebridgeUpdateUIButton(
@@ -116,30 +100,14 @@ class HomebridgeUpdateUIButton(
         self._attr_device_info = _device_info(coordinator, config_entry)
 
     async def async_press(self) -> None:
-        """Trigger the Homebridge UI update and log the result."""
+        """Trigger a Homebridge UI update."""
         _LOGGER.info(
             "Homebridge Monitor: [%s] triggering Homebridge UI update on %s:%s",
             self.entity_id,
             self.coordinator.host,
             self.coordinator.port,
         )
-        success = await self.coordinator.async_update_ui()
-        if success:
-            _LOGGER.info(
-                "Homebridge Monitor: [%s] Homebridge UI update successfully"
-                " initiated on %s:%s",
-                self.entity_id,
-                self.coordinator.host,
-                self.coordinator.port,
-            )
-        else:
-            _LOGGER.warning(
-                "Homebridge Monitor: [%s] failed to initiate Homebridge UI update"
-                " on %s:%s – check previous log entries for the HTTP error detail",
-                self.entity_id,
-                self.coordinator.host,
-                self.coordinator.port,
-            )
+        await self.coordinator.async_update_ui()
 
 
 class HomebridgeUpdatePluginsButton(

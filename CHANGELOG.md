@@ -5,6 +5,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2026-05-06
+
+### Added
+- **Proactive token validation** (`GET /api/auth/check`): at the start of every poll cycle the coordinator checks whether the cached JWT is still accepted by Homebridge before making any authenticated requests.
+- **Token refresh** (`POST /api/auth/refresh`): when `/api/auth/check` returns HTTP 401, the coordinator attempts a lightweight token refresh before falling back to a full credential re-login. This eliminates unnecessary re-logins caused by normal JWT expiry (~8 h).
+- `API_PATH_AUTH_CHECK` and `API_PATH_AUTH_REFRESH` constants added to `const.py`.
+- **Update Homebridge Core** button (`button.<name>_update_homebridge_core`) and domain service (`homebridge_monitor.update_homebridge_core`) re-added after being temporarily removed in v0.3.3.
+- **Update Homebridge UI** button (`button.<name>_update_homebridge_ui`) and domain service (`homebridge_monitor.update_homebridge_ui`) re-added after being temporarily removed in v0.3.3.
+
+### Changed
+- `_async_update_data()`: the inline token-presence check and post-fetch re-auth block are replaced by a single call to `_async_ensure_fresh_token()`.
+- `_async_request()`: on HTTP 401 from a plugin update POST, tries `_async_refresh_token()` before falling back to a full login.
+
+## [0.3.3] - 2026-05-06
+
+### Changed
+- **Single update action**: removed the "Update Homebridge Core" and "Update Homebridge UI" buttons and their corresponding domain services (`update_homebridge_core`, `update_homebridge_ui`). The sole remaining update action is the **Update Plugins** button (`button.homebridge_update_homebridge_plugins`) and service (`homebridge_monitor.update_plugins`), which covers all packages with pending updates.
+- **Correct HTTP method for plugin updates**: the `POST /api/plugins/update/{pluginName}` endpoint (confirmed via the Homebridge Config UI X Swagger spec) is now used instead of PUT. This endpoint accepts `homebridge`, `homebridge-config-ui-x`, or any plugin name and queues the update asynchronously.
+- **Removed** `API_PATH_UPDATE_HOMEBRIDGE` constant from `const.py` (no longer needed).
+
+## [0.3.2] - 2026-05-06
+
+### Fixed
+- **Homebridge core update HTTP 404**: `API_PATH_UPDATE_HOMEBRIDGE` was set to `/api/update/homebridge`, which is not a valid Homebridge Config UI X endpoint and always returned HTTP 404. The correct path is `/api/plugins/update/homebridge`, consistent with how UI and plugin updates are performed (`PUT /api/plugins/update/<package-name>`).
+
 ## [0.3.1] - 2026-05-05
 
 ### Fixed
