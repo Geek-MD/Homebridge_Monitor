@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.3] - 2026-05-06
+
+### Changed
+- **Single update action**: removed the "Update Homebridge Core" and "Update Homebridge UI" buttons and their corresponding domain services (`update_homebridge_core`, `update_homebridge_ui`). The sole remaining update action is the **Update Plugins** button (`button.homebridge_update_homebridge_plugins`) and service (`homebridge_monitor.update_plugins`), which covers all packages with pending updates.
+- **Correct HTTP method for plugin updates**: the `POST /api/plugins/update/{pluginName}` endpoint (confirmed via the Homebridge Config UI X Swagger spec) is now used instead of PUT. This endpoint accepts `homebridge`, `homebridge-config-ui-x`, or any plugin name and queues the update asynchronously.
+- **Removed** `API_PATH_UPDATE_HOMEBRIDGE` constant from `const.py` (no longer needed).
+
 ## [0.3.2] - 2026-05-06
 
 ### Fixed

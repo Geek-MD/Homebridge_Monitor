@@ -73,12 +73,6 @@
       }
     },
     "button": {
-      "update_homebridge_core": {
-        "name": "Mettre à jour le core Homebridge"
-      },
-      "update_homebridge_ui": {
-        "name": "Mettre à jour l'UI Homebridge"
-      },
       "update_homebridge_plugins": {
         "name": "Mettre à jour les plugins"
       }
@@ -96,14 +90,6 @@
     }
   },
   "services": {
-    "update_homebridge_core": {
-      "name": "Mettre à jour le core Homebridge",
-      "description": "Déclenche une mise à jour du core Homebridge sur toutes les instances Homebridge configurées."
-    },
-    "update_homebridge_ui": {
-      "name": "Mettre à jour l'UI Homebridge",
-      "description": "Déclenche une mise à jour de homebridge-config-ui-x sur toutes les instances Homebridge configurées."
-    },
     "update_plugins": {
       "name": "Mettre à jour les plugins",
       "description": "Déclenche les mises à jour de tous les plugins avec des mises à jour en attente sur toutes les instances Homebridge configurées."
