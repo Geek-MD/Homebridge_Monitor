@@ -6,6 +6,7 @@ import asyncio
 import logging
 from datetime import timedelta
 from typing import TYPE_CHECKING, TypedDict
+from urllib.parse import quote
 
 import aiohttp
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
@@ -376,6 +377,7 @@ class HomebridgeCoordinator(DataUpdateCoordinator[HomebridgeData]):
                 async with session.post(
                     url,
                     headers=headers,
+                    json={},
                     timeout=aiohttp.ClientTimeout(total=DEFAULT_TIMEOUT),
                 ) as response:
                     _LOGGER.debug(
@@ -450,7 +452,7 @@ class HomebridgeCoordinator(DataUpdateCoordinator[HomebridgeData]):
 
         Returns True if the request was accepted.
         """
-        path = f"{API_PATH_UPDATE_PLUGIN}/{HB_PACKAGE_NAME}"
+        path = f"{API_PATH_UPDATE_PLUGIN}/{quote(HB_PACKAGE_NAME, safe='')}"
         _LOGGER.debug(
             "Homebridge Monitor: requesting Homebridge core update on %s:%s",
             self.host,
@@ -476,7 +478,7 @@ class HomebridgeCoordinator(DataUpdateCoordinator[HomebridgeData]):
 
         Returns True if the request was accepted.
         """
-        path = f"{API_PATH_UPDATE_PLUGIN}/{HB_UI_PACKAGE_NAME}"
+        path = f"{API_PATH_UPDATE_PLUGIN}/{quote(HB_UI_PACKAGE_NAME, safe='')}"
         _LOGGER.debug(
             "Homebridge Monitor: requesting Homebridge UI update on %s:%s",
             self.host,
@@ -524,7 +526,7 @@ class HomebridgeCoordinator(DataUpdateCoordinator[HomebridgeData]):
         failed: list[str] = []
         for plugin in plugins:
             name: str = plugin["name"]
-            path = f"{API_PATH_UPDATE_PLUGIN}/{name}"
+            path = f"{API_PATH_UPDATE_PLUGIN}/{quote(name, safe='')}"
             _LOGGER.debug(
                 "Homebridge Monitor: requesting update for plugin %s"
                 " (%s → %s) on %s:%s",

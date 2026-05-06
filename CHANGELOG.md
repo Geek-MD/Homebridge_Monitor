@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.1] - 2026-05-06
+
+### Fixed
+- **HTTP 415 on plugin update POSTs**: `_async_request()` was sending POST requests without a body or `Content-Type` header. The Homebridge Config UI X API requires `Content-Type: application/json`, so an empty JSON object (`{}`) is now sent as the request body, which also causes `aiohttp` to set the correct header automatically.
+- **HTTP 404 for scoped plugin updates**: plugin names like `@homebridge-plugins/homebridge-ewelink` contain a `/` that was being used literally in the URL path (e.g. `/api/plugins/update/@homebridge-plugins/homebridge-ewelink`), causing the server to resolve a non-existent route. Plugin names are now URL-encoded with `urllib.parse.quote(name, safe="")` before being appended to the path, producing the correct `/api/plugins/update/%40homebridge-plugins%2Fhomebridge-ewelink`.
+
 ## [0.4.0] - 2026-05-06
 
 ### Added
