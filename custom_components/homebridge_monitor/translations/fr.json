@@ -98,7 +98,13 @@
   "services": {
     "update_plugins": {
       "name": "Mettre à jour les plugins",
-      "description": "Déclenche les mises à jour de tous les plugins avec des mises à jour en attente sur toutes les instances Homebridge configurées."
+      "description": "Déclenche les mises à jour des plugins indiqués (ou de tous les plugins avec des mises à jour en attente si aucune liste n'est fournie) sur toutes les instances Homebridge configurées.",
+      "fields": {
+        "plugins": {
+          "name": "Plugins",
+          "description": "Liste optionnelle des noms de plugins à mettre à jour (ex. homebridge-eveatmo). Si elle est omise, tous les plugins avec des mises à jour en attente sont mis à jour."
+        }
+      }
     },
     "update_homebridge_core": {
       "name": "Mettre à jour Homebridge Core",

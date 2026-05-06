@@ -499,43 +499,74 @@ class HomebridgeCoordinator(DataUpdateCoordinator[HomebridgeData]):
             )
         return result
 
-    async def async_update_all_plugins(self) -> list[str]:
-        """Trigger updates for all plugins with pending updates.
+    async def async_update_all_plugins(
+        self,
+        names: list[str] | None = None,
+    ) -> list[str]:
+        """Trigger updates for plugins with pending updates.
+
+        If *names* is provided, only those plugins are updated (whether or not
+        they appear in the current pending-update list).  If *names* is ``None``
+        (the default), every plugin that currently has a pending update is updated.
 
         Returns the list of plugin names for which the update request was accepted.
         """
-        plugins: list[PluginUpdateInfo] = list(
+        pending: list[PluginUpdateInfo] = list(
             (self.data or {}).get("plugins_with_updates", [])
         )
-        if not plugins:
+
+        if names is not None:
+            # Build a lookup so we can attach version info when it is available.
+            pending_by_name: dict[str, PluginUpdateInfo] = {
+                p["name"]: p for p in pending
+            }
+            to_update: list[PluginUpdateInfo] = [
+                pending_by_name.get(
+                    n,
+                    PluginUpdateInfo(name=n, current_version="", latest_version=""),
+                )
+                for n in names
+            ]
+        else:
+            to_update = pending
+
+        if not to_update:
             _LOGGER.debug(
-                "Homebridge Monitor: no plugins with pending updates found on %s:%s"
-                " – nothing to update",
+                "Homebridge Monitor: no plugins to update on %s:%s – nothing to do",
                 self.host,
                 self.port,
             )
             return []
+
         _LOGGER.debug(
-            "Homebridge Monitor: %d plugin(s) with pending updates on %s:%s: %s",
-            len(plugins),
+            "Homebridge Monitor: updating %d plugin(s) on %s:%s: %s",
+            len(to_update),
             self.host,
             self.port,
-            ", ".join(p["name"] for p in plugins),
+            ", ".join(p["name"] for p in to_update),
         )
         updated: list[str] = []
         failed: list[str] = []
-        for plugin in plugins:
+        for plugin in to_update:
             name: str = plugin["name"]
             path = f"{API_PATH_UPDATE_PLUGIN}/{quote(name, safe='')}"
-            _LOGGER.debug(
-                "Homebridge Monitor: requesting update for plugin %s"
-                " (%s → %s) on %s:%s",
-                name,
-                plugin["current_version"],
-                plugin["latest_version"],
-                self.host,
-                self.port,
-            )
+            if plugin["current_version"] and plugin["latest_version"]:
+                _LOGGER.debug(
+                    "Homebridge Monitor: requesting update for plugin %s"
+                    " (%s → %s) on %s:%s",
+                    name,
+                    plugin["current_version"],
+                    plugin["latest_version"],
+                    self.host,
+                    self.port,
+                )
+            else:
+                _LOGGER.debug(
+                    "Homebridge Monitor: requesting update for plugin %s on %s:%s",
+                    name,
+                    self.host,
+                    self.port,
+                )
             if await self._async_request(path):
                 updated.append(name)
             else:

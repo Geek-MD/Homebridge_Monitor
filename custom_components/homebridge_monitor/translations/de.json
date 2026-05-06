@@ -98,7 +98,13 @@
   "services": {
     "update_plugins": {
       "name": "Plugins aktualisieren",
-      "description": "Löst Updates für alle Plugins mit ausstehenden Updates auf allen konfigurierten Homebridge-Instanzen aus."
+      "description": "Löst Updates für die angegebenen Plugins (oder alle Plugins mit ausstehenden Updates, falls keine Liste angegeben wird) auf allen konfigurierten Homebridge-Instanzen aus.",
+      "fields": {
+        "plugins": {
+          "name": "Plugins",
+          "description": "Optionale Liste der zu aktualisierenden Plugin-Namen (z. B. homebridge-eveatmo). Wird sie weggelassen, werden alle Plugins mit ausstehenden Updates aktualisiert."
+        }
+      }
     },
     "update_homebridge_core": {
       "name": "Homebridge Core aktualisieren",
