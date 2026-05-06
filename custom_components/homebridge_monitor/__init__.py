@@ -5,7 +5,9 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
+import voluptuous as vol
 from homeassistant.const import Platform
+from homeassistant.helpers import config_validation as cv
 
 from .const import (
     CONF_HOST,
@@ -29,6 +31,13 @@ PLATFORMS: list[Platform] = [Platform.BINARY_SENSOR, Platform.BUTTON, Platform.U
 SERVICE_UPDATE_PLUGINS = "update_plugins"
 SERVICE_UPDATE_HOMEBRIDGE_CORE = "update_homebridge_core"
 SERVICE_UPDATE_HOMEBRIDGE_UI = "update_homebridge_ui"
+SERVICE_REAUTHENTICATE = "reauthenticate"
+
+SERVICE_UPDATE_PLUGINS_SCHEMA = vol.Schema(
+    {
+        vol.Optional("plugins"): vol.All(cv.ensure_list, [cv.string]),
+    }
+)
 
 
 async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
@@ -76,11 +85,17 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # Register domain-level services (only once – on the first loaded entry)
     if not hass.services.has_service(DOMAIN, SERVICE_UPDATE_PLUGINS):
 
-        async def _handle_update_plugins(_call: ServiceCall) -> None:
+        async def _handle_update_plugins(call: ServiceCall) -> None:
+            raw: list[str] | None = call.data.get("plugins") or None
             for coord in hass.data[DOMAIN].values():
-                await coord.async_update_all_plugins()
+                await coord.async_update_all_plugins(names=raw)
 
-        hass.services.async_register(DOMAIN, SERVICE_UPDATE_PLUGINS, _handle_update_plugins)
+        hass.services.async_register(
+            DOMAIN,
+            SERVICE_UPDATE_PLUGINS,
+            _handle_update_plugins,
+            schema=SERVICE_UPDATE_PLUGINS_SCHEMA,
+        )
         _LOGGER.debug(
             "Homebridge Monitor: registered domain service (%s)",
             SERVICE_UPDATE_PLUGINS,
@@ -114,6 +129,18 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             SERVICE_UPDATE_HOMEBRIDGE_UI,
         )
 
+    if not hass.services.has_service(DOMAIN, SERVICE_REAUTHENTICATE):
+
+        async def _handle_reauthenticate(_call: ServiceCall) -> None:
+            for coord in hass.data[DOMAIN].values():
+                await coord.async_force_reauthenticate()
+
+        hass.services.async_register(DOMAIN, SERVICE_REAUTHENTICATE, _handle_reauthenticate)
+        _LOGGER.debug(
+            "Homebridge Monitor: registered domain service (%s)",
+            SERVICE_REAUTHENTICATE,
+        )
+
     entry.async_on_unload(entry.add_update_listener(async_reload_entry))
 
     return True
@@ -129,11 +156,13 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             hass.services.async_remove(DOMAIN, SERVICE_UPDATE_PLUGINS)
             hass.services.async_remove(DOMAIN, SERVICE_UPDATE_HOMEBRIDGE_CORE)
             hass.services.async_remove(DOMAIN, SERVICE_UPDATE_HOMEBRIDGE_UI)
+            hass.services.async_remove(DOMAIN, SERVICE_REAUTHENTICATE)
             _LOGGER.debug(
-                "Homebridge Monitor: removed domain services (%s, %s, %s)",
+                "Homebridge Monitor: removed domain services (%s, %s, %s, %s)",
                 SERVICE_UPDATE_PLUGINS,
                 SERVICE_UPDATE_HOMEBRIDGE_CORE,
                 SERVICE_UPDATE_HOMEBRIDGE_UI,
+                SERVICE_REAUTHENTICATE,
             )
     return unload_ok
 

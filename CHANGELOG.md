@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.3] - 2026-05-06
+
+### Added
+- **Reauthenticate button** (`button.<name>_reauthenticate`) and domain service (`homebridge_monitor.reauthenticate`): pressing the button (or calling the service) forces an immediate token renewal without waiting for the next poll cycle.
+  - If the cached JWT is **still valid** (HTTP 200 on `GET /api/auth/check`) → forces a lightweight `POST /api/auth/refresh` to obtain a fresh token; falls back to full login on refresh failure.
+  - If the JWT has **expired** (HTTP 401) or is **absent** → performs a full `POST /api/auth/login`.
+  - Network errors during the validity check → attempts refresh first, then falls back to full login.
+
+## [0.4.2] - 2026-05-06
+
+### Changed
+- **`update_plugins` service now accepts an optional `plugins` field**: pass a list of plugin names (e.g. `homebridge-eveatmo`) to update only those specific plugins. When the field is omitted the service continues to update every plugin that currently has a pending update (previous behaviour is fully preserved). The field is exposed in Home Assistant's *Developer Tools → Actions* UI with a multi-value text selector. Service schema, `services.yaml`, `strings.json`, and all five translation files (en, es, de, fr, pt) have been updated accordingly.
+
+## [0.4.1] - 2026-05-06
+
+### Fixed
+- **HTTP 415 on plugin update POSTs**: `_async_request()` was sending POST requests without a body or `Content-Type` header. The Homebridge Config UI X API requires `Content-Type: application/json`, so an empty JSON object (`{}`) is now sent as the request body, which also causes `aiohttp` to set the correct header automatically.
+- **HTTP 404 for scoped plugin updates**: plugin names like `@homebridge-plugins/homebridge-ewelink` contain a `/` that was being used literally in the URL path (e.g. `/api/plugins/update/@homebridge-plugins/homebridge-ewelink`), causing the server to resolve a non-existent route. Plugin names are now URL-encoded with `urllib.parse.quote(name, safe="")` before being appended to the path, producing the correct `/api/plugins/update/%40homebridge-plugins%2Fhomebridge-ewelink`.
+
 ## [0.4.0] - 2026-05-06
 
 ### Added

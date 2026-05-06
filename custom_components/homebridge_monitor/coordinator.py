@@ -6,6 +6,7 @@ import asyncio
 import logging
 from datetime import timedelta
 from typing import TYPE_CHECKING, TypedDict
+from urllib.parse import quote
 
 import aiohttp
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
@@ -376,6 +377,7 @@ class HomebridgeCoordinator(DataUpdateCoordinator[HomebridgeData]):
                 async with session.post(
                     url,
                     headers=headers,
+                    json={},
                     timeout=aiohttp.ClientTimeout(total=DEFAULT_TIMEOUT),
                 ) as response:
                     _LOGGER.debug(
@@ -450,7 +452,7 @@ class HomebridgeCoordinator(DataUpdateCoordinator[HomebridgeData]):
 
         Returns True if the request was accepted.
         """
-        path = f"{API_PATH_UPDATE_PLUGIN}/{HB_PACKAGE_NAME}"
+        path = f"{API_PATH_UPDATE_PLUGIN}/{quote(HB_PACKAGE_NAME, safe='')}"
         _LOGGER.debug(
             "Homebridge Monitor: requesting Homebridge core update on %s:%s",
             self.host,
@@ -476,7 +478,7 @@ class HomebridgeCoordinator(DataUpdateCoordinator[HomebridgeData]):
 
         Returns True if the request was accepted.
         """
-        path = f"{API_PATH_UPDATE_PLUGIN}/{HB_UI_PACKAGE_NAME}"
+        path = f"{API_PATH_UPDATE_PLUGIN}/{quote(HB_UI_PACKAGE_NAME, safe='')}"
         _LOGGER.debug(
             "Homebridge Monitor: requesting Homebridge UI update on %s:%s",
             self.host,
@@ -497,43 +499,74 @@ class HomebridgeCoordinator(DataUpdateCoordinator[HomebridgeData]):
             )
         return result
 
-    async def async_update_all_plugins(self) -> list[str]:
-        """Trigger updates for all plugins with pending updates.
+    async def async_update_all_plugins(
+        self,
+        names: list[str] | None = None,
+    ) -> list[str]:
+        """Trigger updates for plugins with pending updates.
+
+        If *names* is provided, only those plugins are updated (whether or not
+        they appear in the current pending-update list).  If *names* is ``None``
+        (the default), every plugin that currently has a pending update is updated.
 
         Returns the list of plugin names for which the update request was accepted.
         """
-        plugins: list[PluginUpdateInfo] = list(
+        pending: list[PluginUpdateInfo] = list(
             (self.data or {}).get("plugins_with_updates", [])
         )
-        if not plugins:
+
+        if names is not None:
+            # Build a lookup so we can attach version info when it is available.
+            pending_by_name: dict[str, PluginUpdateInfo] = {
+                p["name"]: p for p in pending
+            }
+            to_update: list[PluginUpdateInfo] = [
+                pending_by_name.get(
+                    n,
+                    PluginUpdateInfo(name=n, current_version="", latest_version=""),
+                )
+                for n in names
+            ]
+        else:
+            to_update = pending
+
+        if not to_update:
             _LOGGER.debug(
-                "Homebridge Monitor: no plugins with pending updates found on %s:%s"
-                " – nothing to update",
+                "Homebridge Monitor: no plugins to update on %s:%s – nothing to do",
                 self.host,
                 self.port,
             )
             return []
+
         _LOGGER.debug(
-            "Homebridge Monitor: %d plugin(s) with pending updates on %s:%s: %s",
-            len(plugins),
+            "Homebridge Monitor: updating %d plugin(s) on %s:%s: %s",
+            len(to_update),
             self.host,
             self.port,
-            ", ".join(p["name"] for p in plugins),
+            ", ".join(p["name"] for p in to_update),
         )
         updated: list[str] = []
         failed: list[str] = []
-        for plugin in plugins:
+        for plugin in to_update:
             name: str = plugin["name"]
-            path = f"{API_PATH_UPDATE_PLUGIN}/{name}"
-            _LOGGER.debug(
-                "Homebridge Monitor: requesting update for plugin %s"
-                " (%s → %s) on %s:%s",
-                name,
-                plugin["current_version"],
-                plugin["latest_version"],
-                self.host,
-                self.port,
-            )
+            path = f"{API_PATH_UPDATE_PLUGIN}/{quote(name, safe='')}"
+            if plugin["current_version"] and plugin["latest_version"]:
+                _LOGGER.debug(
+                    "Homebridge Monitor: requesting update for plugin %s"
+                    " (%s → %s) on %s:%s",
+                    name,
+                    plugin["current_version"],
+                    plugin["latest_version"],
+                    self.host,
+                    self.port,
+                )
+            else:
+                _LOGGER.debug(
+                    "Homebridge Monitor: requesting update for plugin %s on %s:%s",
+                    name,
+                    self.host,
+                    self.port,
+                )
             if await self._async_request(path):
                 updated.append(name)
             else:
@@ -547,6 +580,115 @@ class HomebridgeCoordinator(DataUpdateCoordinator[HomebridgeData]):
                 ", ".join(failed),
             )
         return updated
+
+    async def async_force_reauthenticate(self) -> bool:
+        """Force a token refresh or full re-authentication.
+
+        Strategy:
+        - No cached token → full login.
+        - Cached token still valid (HTTP 200 on /api/auth/check) → force a
+          lightweight refresh via POST /api/auth/refresh (obtains a new JWT
+          even though the current one is still accepted).  Falls back to a full
+          login if the refresh call fails.
+        - Cached token expired (HTTP 401 on /api/auth/check) → full login.
+        - Network error during check → attempt refresh; fall back to full login.
+
+        Returns True if a usable token is available after the operation.
+        """
+        _LOGGER.debug(
+            "Homebridge Monitor: forced re-authentication requested for %s:%s",
+            self.host,
+            self.port,
+        )
+
+        if self._token is None:
+            _LOGGER.debug(
+                "Homebridge Monitor: no cached token – performing full login for %s:%s",
+                self.host,
+                self.port,
+            )
+            self._token = await self._async_authenticate()
+            if self._token:
+                _LOGGER.info(
+                    "Homebridge Monitor: forced re-authentication succeeded for %s:%s",
+                    self.host,
+                    self.port,
+                )
+            else:
+                _LOGGER.warning(
+                    "Homebridge Monitor: forced re-authentication failed for %s:%s",
+                    self.host,
+                    self.port,
+                )
+            return self._token is not None
+
+        # Token exists – check whether it is still valid.
+        url = f"http://{self.host}:{self.port}{API_PATH_AUTH_CHECK}"
+        session = async_get_clientsession(self.hass)
+        token_valid: bool | None = None  # None = unknown (network error)
+        try:
+            async with session.get(
+                url,
+                headers={"Authorization": f"Bearer {self._token}"},
+                timeout=aiohttp.ClientTimeout(total=DEFAULT_TIMEOUT),
+            ) as response:
+                _LOGGER.debug(
+                    "Homebridge Monitor: token check for forced re-auth → HTTP %s from %s:%s",
+                    response.status,
+                    self.host,
+                    self.port,
+                )
+                token_valid = response.status == 200
+        except (asyncio.TimeoutError, aiohttp.ClientError) as err:
+            _LOGGER.debug(
+                "Homebridge Monitor: token check for forced re-auth on %s:%s failed: %s"
+                " – will attempt refresh",
+                self.host,
+                self.port,
+                err,
+            )
+
+        if token_valid:
+            # Token still valid → force a refresh to obtain a fresh JWT.
+            _LOGGER.debug(
+                "Homebridge Monitor: token still valid on %s:%s"
+                " – forcing refresh to obtain a new token",
+                self.host,
+                self.port,
+            )
+            new_token = await self._async_refresh_token()
+            if new_token:
+                self._token = new_token
+                _LOGGER.info(
+                    "Homebridge Monitor: token refreshed successfully"
+                    " (forced) for %s:%s",
+                    self.host,
+                    self.port,
+                )
+                return True
+            _LOGGER.debug(
+                "Homebridge Monitor: forced refresh failed on %s:%s"
+                " – falling back to full login",
+                self.host,
+                self.port,
+            )
+
+        # Token expired, refresh failed, or network error → full login.
+        self._token = await self._async_authenticate()
+        if self._token:
+            _LOGGER.info(
+                "Homebridge Monitor: forced re-authentication (full login)"
+                " succeeded for %s:%s",
+                self.host,
+                self.port,
+            )
+        else:
+            _LOGGER.warning(
+                "Homebridge Monitor: forced re-authentication failed for %s:%s",
+                self.host,
+                self.port,
+            )
+        return self._token is not None
 
     # ------------------------------------------------------------------
     # Main update loop

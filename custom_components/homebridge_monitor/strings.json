@@ -73,6 +73,9 @@
       }
     },
     "button": {
+      "reauthenticate": {
+        "name": "Reauthenticate"
+      },
       "update_homebridge_core": {
         "name": "Update Homebridge Core"
       },
@@ -96,9 +99,19 @@
     }
   },
   "services": {
+    "reauthenticate": {
+      "name": "Reauthenticate",
+      "description": "Forces a token refresh when the current JWT is still valid, or a full re-authentication when it has expired or is absent."
+    },
     "update_plugins": {
       "name": "Update Plugins",
-      "description": "Triggers updates for all plugins with pending updates on all configured Homebridge instances."
+      "description": "Triggers updates for the specified plugins (or all plugins with a pending update if no list is provided) on all configured Homebridge instances.",
+      "fields": {
+        "plugins": {
+          "name": "Plugins",
+          "description": "Optional list of plugin names to update (e.g. homebridge-eveatmo). When omitted, every plugin that currently has a pending update is updated."
+        }
+      }
     },
     "update_homebridge_core": {
       "name": "Update Homebridge Core",
