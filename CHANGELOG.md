@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.4] - 2026-05-10
+
+### Added
+- **Persistent update notifications**: whenever any of the three update sensors becomes active (Homebridge core, Homebridge UI, or plugins), Home Assistant automatically creates a persistent notification in the notifications panel.
+  - Each notification includes the installed and latest version numbers and a direct **[Open integration]** link that takes the user to the Homebridge Monitor integration page, where the corresponding diagnostic update button can be pressed.
+  - Notifications are automatically dismissed when the update sensor returns to *off* (i.e., after the update has been applied and the coordinator picks up the new version).
+  - Each config entry gets its own set of three notification IDs (`homebridge_monitor_{entry_id}_hb_update`, `…_ui_update`, `…_plugins_update`), so multiple Homebridge instances are handled independently.
+  - All notifications are dismissed when the config entry is unloaded.
+
 ## [0.4.3] - 2026-05-06
 
 ### Added
