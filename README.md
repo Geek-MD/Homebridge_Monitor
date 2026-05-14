@@ -24,7 +24,7 @@ It exposes a **connectivity binary sensor** that turns `on` when Homebridge is r
 - **Connectivity binary sensor** – `on` = connected, `off` = disconnected.
 - **Device class `connectivity`** – integrates naturally with the Home Assistant UI and mobile apps.
 - **REST API authentication** – the setup wizard asks for a username and password, validates them against the Homebridge API, and stores the credentials securely.
-- **Update sensors** – three `update` entities report whether a new version of Homebridge core, Homebridge UI, or any installed plugin is available.
+- **Update sensors** – four `update` entities report whether a new version of Homebridge core, Homebridge UI, any installed plugin, or Node.js is available.
 - **Diagnostic buttons** – four `button` entities (in the *Diagnostics* section of the device) let you trigger Homebridge core, UI, and plugin updates, as well as a forced token refresh/re-authentication, directly from the HA UI or from **Developer Tools → Actions** (`button.press`).
 - **Domain services** – the same four actions are also exposed as first-class Home Assistant services under the `homebridge_monitor` domain (`homebridge_monitor.update_homebridge_core`, `homebridge_monitor.update_homebridge_ui`, `homebridge_monitor.update_plugins`, `homebridge_monitor.reauthenticate`) and appear directly in **Developer Tools → Actions**.
 - **Persistent update notifications** – whenever any update sensor becomes active, Home Assistant automatically shows a persistent notification in the notifications panel with the installed/latest version and a direct link to the integration page to press the corresponding update button.
@@ -98,6 +98,7 @@ Both connectivity and credentials are validated before saving.
 | `update.<name>_homebridge_update` | `update` | `firmware` | — | `on` when a Homebridge core update is available |
 | `update.<name>_homebridge_ui_update` | `update` | `firmware` | — | `on` when a Homebridge UI update is available |
 | `update.<name>_plugins_update` | `update` | `firmware` | — | `on` when one or more plugin updates are available |
+| `update.<name>_nodejs_update` | `update` | `firmware` | — | `on` when a Node.js update is available on the Homebridge host |
 | `button.<name>_update_homebridge_core` | `button` | — | `diagnostic` | Triggers a Homebridge core update (`POST /api/plugins/update/homebridge`) |
 | `button.<name>_update_homebridge_ui` | `button` | — | `diagnostic` | Triggers a Homebridge UI update (`POST /api/plugins/update/homebridge-config-ui-x`) |
 | `button.<name>_update_homebridge_plugins` | `button` | — | `diagnostic` | Triggers updates for all plugins with pending updates |
@@ -118,6 +119,16 @@ Both connectivity and credentials are validated before saving.
 |-----------|-------------|
 | `current_version` | Currently installed version |
 | `latest_version` | Latest available version |
+
+#### `update.<name>_nodejs_update`
+
+| Attribute | Description |
+|-----------|-------------|
+| `current_version` | Currently installed Node.js version |
+| `latest_version` | Latest available Node.js version |
+| `npm_version` | Installed npm version |
+| `architecture` | CPU architecture of the Homebridge host |
+| `install_path` | Node.js installation path on the host |
 
 #### `update.<name>_plugins_update`
 

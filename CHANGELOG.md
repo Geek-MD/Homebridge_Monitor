@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.5] - 2026-05-14
+
+### Added
+- **Node.js update sensor** (`update.<name>_nodejs_update`): reports whether a newer version of Node.js is available on the Homebridge host. Data is sourced from `GET /api/status/nodejs` (Homebridge Config UI X Swagger API).
+  - `installed_version` reflects the `currentVersion` field; `latest_version` reflects `latestVersion`.
+  - Extra state attributes expose `npm_version`, `architecture`, and `install_path` from the same endpoint.
+  - A **persistent notification** is automatically created in Home Assistant whenever a Node.js update is detected, and dismissed once the host is up to date.
+  - The entity is translated in all five supported languages (en, es, de, fr, pt).
+
 ## [0.4.4] - 2026-05-10
 
 ### Added

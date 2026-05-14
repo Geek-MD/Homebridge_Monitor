@@ -219,6 +219,24 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         else:
             async_dismiss(hass, plugins_notif_id)
 
+        # --- Node.js update ---
+        nodejs_notif_id = f"{DOMAIN}_{entry.entry_id}_nodejs_update"
+        if data["nodejs_update_available"]:
+            nodejs_cur = data["nodejs_current_version"] or "?"
+            nodejs_lat = data["nodejs_latest_version"] or "?"
+            async_create(
+                hass,
+                message=(
+                    f"A new version of **Node.js** is available for *{title}*"
+                    f" ({nodejs_cur} → {nodejs_lat}).\n\n"
+                    f"Update Node.js on your Homebridge host to apply."
+                ),
+                title="Node.js Update Available",
+                notification_id=nodejs_notif_id,
+            )
+        else:
+            async_dismiss(hass, nodejs_notif_id)
+
     entry.async_on_unload(coordinator.async_add_listener(_async_update_notifications))
 
     return True
@@ -227,7 +245,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""
     # Dismiss any persistent notifications created for this entry.
-    for suffix in ("_hb_update", "_ui_update", "_plugins_update"):
+    for suffix in ("_hb_update", "_ui_update", "_plugins_update", "_nodejs_update"):
         async_dismiss(hass, f"{DOMAIN}_{entry.entry_id}{suffix}")
 
     unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)

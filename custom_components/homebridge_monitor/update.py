@@ -32,6 +32,7 @@ async def async_setup_entry(
             HomebridgeUpdateEntity(coordinator, config_entry),
             HomebridgeUIUpdateEntity(coordinator, config_entry),
             HomebridgePluginsUpdateEntity(coordinator, config_entry),
+            HomebridgeNodeJSUpdateEntity(coordinator, config_entry),
         ]
     )
 
@@ -185,4 +186,52 @@ class HomebridgePluginsUpdateEntity(
         """Return the list of plugins with available updates."""
         return {
             "plugins_with_updates": self._plugins_with_updates(),
+        }
+
+
+class HomebridgeNodeJSUpdateEntity(
+    CoordinatorEntity[HomebridgeCoordinator], UpdateEntity
+):
+    """Update entity that reports whether a Node.js update is available."""
+
+    _attr_has_entity_name = True
+    _attr_translation_key = "nodejs_update"
+    _attr_device_class = UpdateDeviceClass.FIRMWARE
+    _attr_title = "Node.js"
+
+    def __init__(
+        self,
+        coordinator: HomebridgeCoordinator,
+        config_entry: ConfigEntry,
+    ) -> None:
+        """Initialize the entity."""
+        super().__init__(coordinator)
+        self._config_entry = config_entry
+        self._attr_unique_id = f"{DOMAIN}_{config_entry.entry_id}_nodejs_update"
+        self._attr_device_info = _device_info(coordinator, config_entry)
+
+    @property
+    def installed_version(self) -> str | None:
+        """Return the currently installed Node.js version."""
+        return self.coordinator.data.get("nodejs_current_version")
+
+    @property
+    def latest_version(self) -> str | None:
+        """Return the latest available Node.js version."""
+        return self.coordinator.data.get("nodejs_latest_version")
+
+    @property
+    def release_url(self) -> str | None:
+        """Return a link to the Node.js releases page."""
+        return "https://nodejs.org/en/download/releases"
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        """Return extra state attributes."""
+        return {
+            "current_version": self.installed_version,
+            "latest_version": self.latest_version,
+            "npm_version": self.coordinator.data.get("nodejs_npm_version"),
+            "architecture": self.coordinator.data.get("nodejs_architecture"),
+            "install_path": self.coordinator.data.get("nodejs_install_path"),
         }

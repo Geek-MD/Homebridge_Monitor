@@ -95,6 +95,9 @@
       },
       "plugins_update": {
         "name": "Mise à jour des plugins"
+      },
+      "nodejs_update": {
+        "name": "Mise à jour Node.js"
       }
     }
   },

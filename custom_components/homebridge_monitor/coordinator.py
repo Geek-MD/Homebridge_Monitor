@@ -17,6 +17,7 @@ from .const import (
     API_PATH_AUTH_CHECK,
     API_PATH_AUTH_REFRESH,
     API_PATH_HB_VERSION,
+    API_PATH_NODEJS,
     API_PATH_PLUGINS,
     API_PATH_UPDATE_PLUGIN,
     DEFAULT_TIMEOUT,
@@ -50,6 +51,12 @@ class HomebridgeData(TypedDict):
     ui_latest_version: str | None
     ui_update_available: bool
     plugins_with_updates: list[PluginUpdateInfo]
+    nodejs_current_version: str | None
+    nodejs_latest_version: str | None
+    nodejs_update_available: bool
+    nodejs_npm_version: str | None
+    nodejs_architecture: str | None
+    nodejs_install_path: str | None
 
 
 def _empty_data(*, connected: bool) -> HomebridgeData:
@@ -63,6 +70,12 @@ def _empty_data(*, connected: bool) -> HomebridgeData:
         ui_latest_version=None,
         ui_update_available=False,
         plugins_with_updates=[],
+        nodejs_current_version=None,
+        nodejs_latest_version=None,
+        nodejs_update_available=False,
+        nodejs_npm_version=None,
+        nodejs_architecture=None,
+        nodejs_install_path=None,
     )
 
 
@@ -834,6 +847,31 @@ class HomebridgeCoordinator(DataUpdateCoordinator[HomebridgeData]):
                 self.port,
             )
 
+        # 5. Fetch Node.js version / update info
+        nodejs_payload = await self._async_get_json(session, API_PATH_NODEJS, headers)
+        if not isinstance(nodejs_payload, dict):
+            _LOGGER.debug(
+                "Homebridge Monitor: Node.js status endpoint returned unexpected data"
+                " type (%s) from %s:%s – skipping Node.js info",
+                type(nodejs_payload).__name__,
+                self.host,
+                self.port,
+            )
+            nodejs_payload = {}
+
+        nodejs_current: str | None = nodejs_payload.get("currentVersion")
+        nodejs_latest: str | None = nodejs_payload.get("latestVersion")
+        nodejs_update: bool = bool(nodejs_payload.get("updateAvailable", False))
+        nodejs_npm_version: str | None = nodejs_payload.get("npmVersion")
+        nodejs_architecture: str | None = nodejs_payload.get("architecture")
+        nodejs_install_path: str | None = nodejs_payload.get("installPath")
+        _LOGGER.debug(
+            "Homebridge Monitor: Node.js – current=%s latest=%s update_available=%s",
+            nodejs_current,
+            nodejs_latest,
+            nodejs_update,
+        )
+
         return HomebridgeData(
             connected=True,
             homebridge_current_version=hb_current,
@@ -843,4 +881,10 @@ class HomebridgeCoordinator(DataUpdateCoordinator[HomebridgeData]):
             ui_latest_version=ui_latest,
             ui_update_available=ui_update,
             plugins_with_updates=plugins_with_updates,
+            nodejs_current_version=nodejs_current,
+            nodejs_latest_version=nodejs_latest,
+            nodejs_update_available=nodejs_update,
+            nodejs_npm_version=nodejs_npm_version,
+            nodejs_architecture=nodejs_architecture,
+            nodejs_install_path=nodejs_install_path,
         )

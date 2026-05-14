@@ -95,6 +95,9 @@
       },
       "plugins_update": {
         "name": "Plugin-Updates"
+      },
+      "nodejs_update": {
+        "name": "Node.js-Update"
       }
     }
   },
