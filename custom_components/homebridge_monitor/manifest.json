@@ -1,12 +1,17 @@
 {
   "domain": "homebridge_monitor",
   "name": "Homebridge Monitor",
+  "categories": [
+    "computers_network.monitoring",
+    "hubs_protocols.smart_home_hubs"
+  ],
   "codeowners": ["@Geek-MD"],
   "config_flow": true,
   "dependencies": [],
   "documentation": "https://github.com/Geek-MD/Homebridge_Monitor",
+  "integration_type": "device",
   "iot_class": "local_polling",
   "issue_tracker": "https://github.com/Geek-MD/Homebridge_Monitor/issues",
   "requirements": [],
-  "version": "0.4.5"
+  "version": "0.4.6"
 }

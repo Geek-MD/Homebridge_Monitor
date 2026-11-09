@@ -179,16 +179,13 @@ class FlowHandler(
             elif not await _test_authentication(self.hass, host, port, username, password):
                 errors["base"] = "invalid_auth"
             else:
-                self.hass.config_entries.async_update_entry(
+                return self.async_update_reload_and_abort(
                     reauth_entry,
-                    data={
-                        **reauth_entry.data,
+                    data_updates={
                         CONF_USERNAME: username,
                         CONF_PASSWORD: password,
                     },
                 )
-                await self.hass.config_entries.async_reload(reauth_entry.entry_id)
-                return self.async_abort(reason="reauth_successful")
 
         return self.async_show_form(
             step_id="reauth_confirm",
