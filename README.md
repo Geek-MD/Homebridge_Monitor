@@ -6,6 +6,10 @@
 [![License](https://img.shields.io/badge/License-MIT-blue)](https://github.com/Geek-MD/Homebridge_Monitor/blob/main/LICENSE)
 [![HACS Custom Repository](https://img.shields.io/badge/HACS-Custom%20Repository-blue)](https://hacs.xyz/)
 
+<!-- ha-marketplace:exclude-start -->
+[![Open your Home Assistant instance and open Homebridge Monitor in the Marketplace.](https://my.home-assistant.io/badges/marketplace_repository.svg)](https://my.home-assistant.io/redirect/marketplace_repository/?owner=Geek-MD&repository=Homebridge_Monitor&category=integration)
+<!-- ha-marketplace:exclude-end -->
+
 [![Ruff + Mypy + Hassfest](https://github.com/Geek-MD/Homebridge_Monitor/actions/workflows/ci.yaml/badge.svg)](https://github.com/Geek-MD/Homebridge_Monitor/actions/workflows/ci.yaml)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 [![Checked with mypy](https://www.mypy-lang.org/static/mypy_badge.svg)](https://mypy-lang.org/)
@@ -21,7 +25,7 @@ Version **0.4.6** is prepared for Home Assistant 2026.11 Marketplace discovery a
 
 ---
 
-## Features
+## ✨ Features
 
 - **Connectivity binary sensor** – `on` = connected, `off` = disconnected.
 - **Device class `connectivity`** – integrates naturally with the Home Assistant UI and mobile apps.
@@ -38,7 +42,7 @@ Version **0.4.6** is prepared for Home Assistant 2026.11 Marketplace discovery a
 
 ---
 
-## Requirements
+## 📋 Requirements
 
 | Requirement | Minimum version |
 |-------------|----------------|
@@ -47,9 +51,15 @@ Version **0.4.6** is prepared for Home Assistant 2026.11 Marketplace discovery a
 
 ---
 
-## Installation
+## 🛠 Installation
 
-### Via HACS (recommended)
+### Option 1: Marketplace (Home Assistant 2026.11 or newer)
+
+1. Go to **Settings → Marketplace**.
+2. Search for **Homebridge Monitor**, select **Install**, and confirm the version.
+3. Complete setup when Home Assistant opens the integration page.
+
+### Option 2: HACS (Home Assistant 2026.10 or older)
 
 1. Open HACS → **Integrations**.
 2. Click the three-dot menu → **Custom repositories**.
@@ -57,14 +67,14 @@ Version **0.4.6** is prepared for Home Assistant 2026.11 Marketplace discovery a
 4. Search for **Homebridge Monitor** and click **Download**.
 5. Restart Home Assistant.
 
-### Manual
+### Option 3: Manual installation
 
 1. Copy the `custom_components/homebridge_monitor` directory into your `<config>/custom_components/` folder.
 2. Restart Home Assistant.
 
 ---
 
-## Configuration
+## ⚙️ Configuration
 
 1. Go to **Settings → Devices & Services → Add Integration**.
 2. Search for **Homebridge Monitor**.
@@ -92,7 +102,7 @@ Both connectivity and credentials are validated before saving.
 
 ---
 
-## Entities
+## 📊 Entities
 
 | Entity | Domain | Device class | Entity category | Description |
 |--------|--------|--------------|-----------------|-------------|
@@ -174,7 +184,7 @@ action: homebridge_monitor.update_homebridge_core
 
 ---
 
-## Automations example
+## 💡 Automations example
 
 ```yaml
 automation:
@@ -192,13 +202,13 @@ automation:
 
 ---
 
-## Changelog
+## 🗂️ Changelog
 
 See [CHANGELOG.md](CHANGELOG.md).
 
 ---
 
-## License
+## 📜 License
 
 This project is licensed under the [MIT License](LICENSE).
 
