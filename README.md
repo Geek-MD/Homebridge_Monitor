@@ -17,6 +17,8 @@
 A custom Home Assistant integration that monitors the connectivity of a local [Homebridge](https://homebridge.io) instance.  
 It exposes a **connectivity binary sensor** that turns `on` when Homebridge is reachable and `off` when it is not – similar in spirit to the built-in [Ping (ICMP)](https://www.home-assistant.io/integrations/ping/) integration, but targeted specifically at the Homebridge web UI endpoint.
 
+Version **0.4.6** is prepared for Home Assistant 2026.11 Marketplace discovery and uses the current reauthentication reload helper.
+
 ---
 
 ## Features
